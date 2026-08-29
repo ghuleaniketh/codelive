@@ -9,46 +9,67 @@ export const StorageShelfScene = ({
   initialSlots: Array<{ key: string; value: unknown | null }>;
   actions: SceneAction[];
 }) => {
-  const slots = initialSlots.map((slot, index) => (
-    <motion.rect
-      key={slot.key}
-      x={index * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap)}
-      y={40}
-      width={sceneTokens.spacing.boxWidth}
-      height={sceneTokens.spacing.boxHeight}
-      fill={slot.value === null ? "#f1f5f9" : sceneTokens.colors.boxFill}
-      stroke={sceneTokens.colors.boxStroke}
-      strokeWidth={sceneTokens.strokeWidths.box}
-      whileHover={{ strokeWidth: sceneTokens.strokeWidths.box + 2 }}
-    >
-      <motion.text
-        x="50%"
-        y="50%"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={sceneTokens.colors.text}
-        fontSize={sceneTokens.fontSizes.medium}
->
-        {slot.key}
-      </motion.text>
-      {slot.value !== null && (
-        <motion.text
-          x={sceneTokens.spacing.boxWidth - 10}
-          y={sceneTokens.spacing.boxHeight / 2}
-          textAnchor="end"
+  const slotShapes = initialSlots.map((slot, index) => {
+    const bx = index * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap);
+    const by = 40;
+    return (
+      <motion.rect
+        key={slot.key}
+        x={bx}
+        y={by}
+        width={sceneTokens.spacing.boxWidth}
+        height={sceneTokens.spacing.boxHeight}
+        fill={slot.value === null ? "#f1f5f9" : sceneTokens.colors.boxFill}
+        stroke={sceneTokens.colors.boxStroke}
+        strokeWidth={sceneTokens.strokeWidths.box}
+        whileHover={{ strokeWidth: sceneTokens.strokeWidths.box + 2 }}
+      />
+    );
+  });
+
+  const slotLabels = initialSlots.map((slot, index) => {
+    const bx = index * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap);
+    const by = 40;
+    return (
+      <g key={`label-${slot.key}`}>
+        <text
+          x={bx + sceneTokens.spacing.boxWidth / 2}
+          y={by + 15}
+          textAnchor="middle"
           dominantBaseline="middle"
           fill={sceneTokens.colors.text}
-          fontSize={sceneTokens.fontSizes.small}
+          fontSize={sceneTokens.fontSizes.medium}
         >
-          {String(slot.value)}
-        </motion.text>
-      )}
-    </motion.rect>
-  ));
+          {slot.key}
+        </text>
+        {slot.value !== null && (
+          <text
+            x={bx + sceneTokens.spacing.boxWidth - 10}
+            y={by + 30}
+            textAnchor="end"
+            dominantBaseline="middle"
+            fill={sceneTokens.colors.text}
+            fontSize={sceneTokens.fontSizes.small}
+          >
+            {String(slot.value)}
+          </text>
+        )}
+      </g>
+    );
+  });
+
+  const shelfWidth = initialSlots.length * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap);
+  const shelfHeight = 40 + sceneTokens.spacing.boxHeight + 20;
+  const shelfViewBox = `0 0 ${shelfWidth} ${shelfHeight}`;
 
   return (
-    <div style={{ position: "relative", width: "100%" }}>
-      {slots}
+    <svg
+      viewBox={shelfViewBox}
+      width={shelfWidth}
+      height={shelfHeight}
+      style={{ display: "block", maxWidth: "100%", height: "auto" }}
+    >
+      {slotShapes}
       {actions.map((action, i) => {
         if (action.component === "Slot" && action.action === "insert") {
           const { params } = action;
@@ -112,6 +133,7 @@ export const StorageShelfScene = ({
         }
         return null;
       })}
-    </div>
+      {slotLabels}
+    </svg>
   );
 };

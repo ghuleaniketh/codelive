@@ -12,8 +12,15 @@ export const DecisionGateScene = ({
   const gateWidth = 120;
   const gateHeight = 80;
 
+  const gateViewBox = "0 0 200 90";
+
   return (
-    <div style={{ position: "relative", width: "100%" }}>
+    <svg
+      viewBox={gateViewBox}
+      width={200}
+      height={90}
+      style={{ display: "block", maxWidth: "100%", height: "auto" }}
+    >
       <g>
         <motion.polygon
           key="gate-shape"
@@ -24,17 +31,6 @@ export const DecisionGateScene = ({
           whileHover={{ fill: sceneTokens.colors.highlight }}
           whileTap={{ scale: 0.98 }}
         />
-        <motion.text
-          key="gate-text"
-          x="60"
-          y="40"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill={sceneTokens.colors.text}
-          fontSize={sceneTokens.fontSizes.medium}
-        >
-          {condition}
-        </motion.text>
       </g>
       {actions.map((action, i) => {
         const { params } = action;
@@ -115,6 +111,16 @@ export const DecisionGateScene = ({
         }
         return null;
       })}
-    </div>
+      <text
+        x="60"
+        y="40"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill={sceneTokens.colors.text}
+        fontSize={sceneTokens.fontSizes.medium}
+      >
+        {condition}
+      </text>
+    </svg>
   );
 };

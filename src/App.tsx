@@ -8,6 +8,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/CodeStoryStudioPage";
 import TestAuthPage from "./pages/TestAuthPage";
 import { TestScenesPage } from "./features/story-viewer/scenes/TestScenesPage";
+import { QuestionInputPage } from "./features/question-input/QuestionInputPage";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -18,6 +19,7 @@ function Router() {
       <Route path={"/test-runner-state"} component={TestRunnerState} />
       <Route path={"/test-auth"} component={TestAuthPage} />
       <Route path={"/test-scenes"} component={TestScenesPage} />
+      <Route path={"/solve"} component={QuestionInputPage} />
       {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>

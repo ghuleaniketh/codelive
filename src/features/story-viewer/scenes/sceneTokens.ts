@@ -6,6 +6,7 @@ export const sceneTokens = {
     highlight: "#fbbf24",
     text: "#1e293b",
     connector: "#64748b",
+    muted: "#64748b",
   },
   strokeWidths: {
     box: 1,
@@ -25,4 +26,7 @@ export const sceneTokens = {
     boxHeight: 40,
   },
   animationDuration: 400,
+  radii: {
+    card: 16,
+  },
 };
