@@ -25,6 +25,88 @@ const gateActions: SceneAction[] = [
   { component: "PathTaken", action: "takePath", params: { taken: "true" } },
 ];
 
+// "Build from empty": start with no nodes / no head, then insert 3 nodes.
+// Demonstrates insertNode becoming the new head (afterId=null) and splicing
+// in after a referenced node.
+const chainBuildActions: SceneAction[] = [
+  { component: "ListNode", action: "insertNode", params: { afterId: null, newNodeId: "c1", value: 10 } },
+  { component: "ListNode", action: "setPointer", params: { name: "head", nodeId: "c1" } },
+  { component: "ListNode", action: "insertNode", params: { afterId: "c1", newNodeId: "c2", value: 20 } },
+  { component: "ListNode", action: "insertNode", params: { afterId: "c2", newNodeId: "c3", value: 30 } },
+];
+
+// "Reversal": an existing 3-node chain 1->2->3 gets its `next` pointers
+// redirected via updateNext so it becomes 3->2->1, with head moved to n3.
+const chainReverseActions: SceneAction[] = [
+  { component: "ListNode", action: "visit", params: { nodeId: "r1" } },
+  { component: "ListNode", action: "updateNext", params: { nodeId: "r1", newNextId: null } },
+  { component: "ListNode", action: "updateNext", params: { nodeId: "r2", newNextId: "r1" } },
+  { component: "ListNode", action: "updateNext", params: { nodeId: "r3", newNextId: "r2" } },
+  { component: "ListNode", action: "setPointer", params: { name: "head", nodeId: "r3" } },
+];
+
+// "Build and pop": push 3 items onto the workbench stack, then pop them
+// one at a time. Demonstrates push adds to top, pop removes from top, and
+// Prev/Next correctly tracks the accumulating state (items disappear after pop).
+const workbenchBuildAndPopActions: SceneAction[] = [
+  { component: "WorkbenchItem", action: "push", params: { itemId: "w1", value: 10 } },
+  { component: "WorkbenchItem", action: "push", params: { itemId: "w2", value: 20 } },
+  { component: "WorkbenchItem", action: "push", params: { itemId: "w3", value: 30 } },
+  { component: "WorkbenchItem", action: "pop", params: { itemId: "w3" } },
+  { component: "WorkbenchItem", action: "pop", params: { itemId: "w2" } },
+  { component: "WorkbenchItem", action: "pop", params: { itemId: "w1" } },
+];
+
+// Graph traversal fixture: when consumed one action at a time by StoryViewer,
+// it shows a BFS-like visit -> done progression while the crossing road pulses.
+const cityTraversalActions: SceneAction[] = [
+  { component: "GraphNode", action: "visit", params: { nodeId: "a" } },
+  { component: "GraphNode", action: "markVisited", params: { nodeId: "a" } },
+  { component: "GraphEdge", action: "traverse", params: { from: "a", to: "b" } },
+  { component: "GraphNode", action: "visit", params: { nodeId: "b" } },
+  { component: "GraphNode", action: "markVisited", params: { nodeId: "b" } },
+  { component: "GraphEdge", action: "traverse", params: { from: "b", to: "c" } },
+  { component: "GraphNode", action: "visit", params: { nodeId: "c" } },
+  { component: "GraphEdge", action: "highlight", params: { from: "a", to: "c" } },
+];
+
+// CASE B fixture: a graph constructed entirely through action replay.
+const cityBuildActions: SceneAction[] = [
+  { component: "GraphNode", action: "addNode", params: { newNodeId: "start", value: 1, x: 60, y: 80 } },
+  { component: "GraphNode", action: "addNode", params: { newNodeId: "park", value: 2, x: 190, y: 45 } },
+  { component: "GraphEdge", action: "addEdge", params: { from: "start", to: "park", weight: 4, directed: true } },
+  { component: "GraphNode", action: "addNode", params: { newNodeId: "museum", value: 3, x: 210, y: 150 } },
+  { component: "GraphEdge", action: "addEdge", params: { from: "park", to: "museum", weight: 2, directed: false } },
+];
+
+const queueDrainActions: SceneAction[] = [
+  { component: "QueueItem", action: "enqueue", params: { itemId: "q1", value: 10 } },
+  { component: "QueueItem", action: "enqueue", params: { itemId: "q2", value: 20 } },
+  { component: "QueueItem", action: "highlight", params: { itemId: "q1" } },
+  { component: "QueueItem", action: "dequeue", params: { itemId: "q1" } },
+  { component: "QueueItem", action: "dequeue", params: { itemId: "q2" } },
+];
+
+const recursionActions: SceneAction[] = [
+  { component: "CallFrame", action: "pushFrame", params: { frameId: "f0", label: "factorial(3)", depth: 0 } },
+  { component: "CallFrame", action: "pushFrame", params: { frameId: "f1", label: "factorial(2)", depth: 1 } },
+  { component: "CallFrame", action: "pushFrame", params: { frameId: "f2", label: "factorial(1)", depth: 2 } },
+  { component: "CallFrame", action: "returnValue", params: { frameId: "f2", value: 1 } },
+  { component: "CallFrame", action: "popFrame", params: { frameId: "f2" } },
+  { component: "CallFrame", action: "returnValue", params: { frameId: "f1", value: 2 } },
+  { component: "CallFrame", action: "backtrack", params: { frameId: "f1" } },
+  { component: "CallFrame", action: "popFrame", params: { frameId: "f1" } },
+];
+
+const binarySearchActions: SceneAction[] = [
+  { component: "SearchItem", action: "checkIndex", params: { index: 7 } },
+  { component: "SearchItem", action: "narrowRange", params: { low: 4, high: 6 } },
+  { component: "SearchItem", action: "checkIndex", params: { index: 8 } },
+  { component: "SearchItem", action: "narrowRange", params: { low: 4, high: 4 } },
+  { component: "SearchItem", action: "checkIndex", params: { index: 4 } },
+  { component: "SearchItem", action: "found", params: { index: 4 } },
+];
+
 export const TestScenesPage = () => (
   <div
     style={{
@@ -80,6 +162,54 @@ export const TestScenesPage = () => (
         kind="decision-gate"
         initialData={{ condition: "x > 5" }}
         actions={gateActions}
+      />
+      <SceneRenderer
+        kind="linked-chain"
+        initialData={{ headId: null, nodes: [] }}
+        actions={chainBuildActions}
+      />
+      <SceneRenderer
+        kind="linked-chain"
+        initialData={{
+          headId: "r1",
+          nodes: [
+            { id: "r1", value: 1, next: "r2" },
+            { id: "r2", value: 2, next: "r3" },
+            { id: "r3", value: 3, next: null },
+          ],
+        }}
+        actions={chainReverseActions}
+      />
+      <SceneRenderer
+        kind="workbench"
+        initialData={{ items: [] }}
+        actions={workbenchBuildAndPopActions}
+      />
+      <SceneRenderer
+        kind="city-map"
+        initialData={{
+          nodes: [
+            { id: "a", value: 1, x: 70, y: 110 },
+            { id: "b", value: 2, x: 185, y: 55 },
+            { id: "c", value: 3, x: 290, y: 120 },
+            { id: "d", value: 4, x: 175, y: 180 },
+          ],
+          edges: [
+            { from: "a", to: "b", weight: 3, directed: true },
+            { from: "b", to: "c", weight: 2, directed: true },
+            { from: "a", to: "c", weight: 7 },
+            { from: "b", to: "d", weight: 1 },
+          ],
+        }}
+        actions={cityTraversalActions}
+      />
+      <SceneRenderer kind="city-map" initialData={{ nodes: [], edges: [] }} actions={cityBuildActions} />
+      <SceneRenderer kind="conveyor-loop" initialData={{ items: [] }} actions={queueDrainActions} />
+      <SceneRenderer kind="recursion-stairs" initialData={{ frames: [] }} actions={recursionActions} />
+      <SceneRenderer
+        kind="delivery-desk"
+        initialData={{ array: [3, 7, 11, 18, 24, 31, 42].map((value) => ({ id: String(value), value })) }}
+        actions={binarySearchActions}
       />
     </div>
   </div>
