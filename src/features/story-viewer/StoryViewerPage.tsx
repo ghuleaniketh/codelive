@@ -1,34 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { SceneRenderer } from "./scenes/SceneRenderer";
 import { SceneAction } from "./scenes/types";
 import { sceneTokens } from "./scenes/sceneTokens";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { CodePanel } from "./CodePanel";
-
-/** Shape of a Story returned by the real backend `questions.solve` mutation. */
-export interface StoryData {
-  id: string;
-  submissionId: string;
-  codeHash: string;
-  language: string;
-  kind: string;
-  initialData: {
-    bitWidth: number;
-    initialValue: number;
-    secondValue?: number;
-    code?: string;
-  };
-  steps: Array<{
-    index: number;
-    text: string;
-    narrationText: string;
-    stepType: "intro" | "summary" | undefined;
-    sceneActions: SceneAction[];
-    codeLines?: number[];
-  }>;
-  createdAt: string | Date;
-}
+import { PlaybackControls } from "@/features/story-viewer/PlaybackControls";
+import { StatePanel } from "@/features/story-viewer/StatePanel";
+import { ProblemPanel } from "@/features/story-viewer/ProblemPanel";
 
 const SUPPORTED_KINDS = new Set([
   "sorting-tray",
@@ -44,41 +23,53 @@ const SUPPORTED_KINDS = new Set([
   "workshop",
 ]) as ReadonlySet<string>;
 
+import type { Story, ProblemMeta } from "./types";
+
 export function StoryViewerPage({
   story,
+  problemMeta,
+  questionText,
   onBack,
 }: {
-  story: StoryData;
+  story: Story;
+  problemMeta?: ProblemMeta;
+  questionText: string;
   onBack: () => void;
 }) {
-  const [current, setCurrent] = useState(0);
-  const steps = story.steps ?? [];
-  const total = steps.length;
-  const step = steps[current];
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  // Cumulative actions: replay steps 0..current so scene state ACCUMULATES and
-  // Prev/Next rebuild deterministically (state at step N depends on every
-  // insert/insertNode action from step 0 through N, never just the current one).
+  const steps = story?.steps ?? [];
+  const total = steps.length;
+  const step = steps[currentStepIndex];
+  const effectiveProblemMeta = problemMeta ?? story?.problemMeta;
+
+  // Cumulative actions: replay steps 0..currentStepIndex so scene state ACCUMULATES
+  // and Prev/Next/restart rebuild deterministically.
   const actions = useMemo(() => {
     const list: SceneAction[] = [];
-    for (let i = 0; i <= current && i < steps.length; i++) {
+    for (let i = 0; i <= currentStepIndex && i < steps.length; i++) {
       const s = steps[i];
       if (s?.sceneActions) list.push(...(s.sceneActions as SceneAction[]));
     }
     return list;
-  }, [steps, current]);
+  }, [steps, currentStepIndex]);
 
-  const isSupported = SUPPORTED_KINDS.has(story.kind);
+  const isSupported = SUPPORTED_KINDS.has(story?.kind);
 
-  const goPrev = () => setCurrent((c) => Math.max(0, c - 1));
-  const goNext = () => setCurrent((c) => Math.min(total - 1, c + 1));
-  const restart = () => setCurrent(0);
-
-  // Code and language from the story/initialData for the syntax highlighter
-  const storyCode = story.initialData?.code;
-  const storyLanguage = story.language;
-  // Highlighted lines for the current step (codeLines from that step)
+  // Derive code/language from the story
+  const storyCode = story?.initialData?.code;
+  const storyLanguage = story?.language;
   const currentCodeLines = step?.codeLines;
+
+  const goPrev = () => {
+    setCurrentStepIndex((c) => Math.max(0, c - 1));
+  };
+  const goNext = () => {
+    setCurrentStepIndex((c) => Math.min(total - 1, c + 1));
+  };
+  const restart = () => {
+    setCurrentStepIndex(0);
+  };
 
   return (
     <div
@@ -115,7 +106,7 @@ export function StoryViewerPage({
             Story viewer
           </p>
           <h1 style={{ fontSize: sceneTokens.fontSizes.large, fontWeight: 800 }}>
-            {story.kind}
+            {story?.kind || "Problem"}
           </h1>
         </div>
         <Button variant="outline" onClick={onBack}>
@@ -123,53 +114,33 @@ export function StoryViewerPage({
         </Button>
       </header>
 
-      <section
+      <ProblemPanel problemMeta={effectiveProblemMeta} questionText={questionText} />
+
+      <div
         style={{
           width: "100%",
           maxWidth: 920,
           display: "flex",
           gap: sceneTokens.spacing.gap,
+          marginBottom: sceneTokens.spacing.gap,
         }}
       >
-        {/* Left column: CodePanel */}
-        {storyCode && storyLanguage ? (
-          <div
-            style={{
-              flex: "1",
-              maxWidth: 430,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
-            <CodePanel
-              code={storyCode}
-              language={storyLanguage}
-              highlightedLines={currentCodeLines ?? []}
-            />
-          </div>
-        ) : (
-          <div
-            style={{
-              flex: "1",
-              maxWidth: 430,
-              height: 200,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1px dashed",
-              borderColor: sceneTokens.colors.connector,
-              borderRadius: sceneTokens.radii.card,
-              background: "rgba(255,255,255,0.03)",
-              color: sceneTokens.colors.muted,
-              fontSize: sceneTokens.fontSizes.small,
-            }}
-          >
-            <p>Connect problem to see code</p>
-          </div>
-        )}
+        <div
+          style={{
+            flex: "1",
+            minWidth: 0,
+            background: "rgba(255, 255, 255, 0.02)",
+            borderRadius: sceneTokens.radii.card,
+            padding: sceneTokens.spacing.padding,
+          }}
+        >
+          <CodePanel
+            code={storyCode ?? ""}
+            language={storyLanguage ?? "python"}
+            highlightedLines={currentCodeLines ?? []}
+          />
+        </div>
 
-        {/* Right column: Scene + step controls */}
         <div
           style={{
             flex: "1",
@@ -180,7 +151,7 @@ export function StoryViewerPage({
           {isSupported ? (
             <SceneRenderer
               kind={
-                story.kind as
+                story?.kind as
                   | "sorting-tray"
                   | "storage-shelf"
                   | "family-tree"
@@ -193,15 +164,14 @@ export function StoryViewerPage({
                   | "delivery-desk"
                   | "workshop"
               }
-              initialData={story.initialData}
+              initialData={story?.initialData ?? {}}
               actions={actions}
             />
           ) : (
             <div style={{ textAlign: "center", color: sceneTokens.colors.muted }}>
-              <p style={{ fontWeight: 700 }}>Story kind " {story.kind}"</p>
+              <p style={{ fontWeight: 700 }}>Story kind</p>
               <p style={{ marginTop: 8, fontSize: sceneTokens.fontSizes.small }}>
-                This story kind isn't visualized yet. The backend generated{" "}
-                {total} step(s), but no scene renderer is wired for it.
+                This story kind isn't visualized yet.
               </p>
             </div>
           )}
@@ -226,7 +196,7 @@ export function StoryViewerPage({
                   color: sceneTokens.colors.muted,
                 }}
               >
-                Step {current + 1} of {total}
+                Step {currentStepIndex + 1} of {total}
               </p>
               {step.stepType === "intro" && (
                 <span
@@ -296,34 +266,21 @@ export function StoryViewerPage({
             </section>
           )}
         </div>
-      </section>
-
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 920,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: sceneTokens.spacing.gap,
-          marginTop: sceneTokens.spacing.gap,
-        }}
-      >
-        <Button variant="outline" onClick={goPrev} disabled={current === 0}>
-          <ChevronLeft className="mr-1 h-4 w-4" /> Prev
-        </Button>
-        <span style={{ fontSize: sceneTokens.fontSizes.small, color: sceneTokens.colors.muted }}>
-          {current + 1} / {total}
-        </span>
-        <div style={{ display: "flex", gap: sceneTokens.spacing.gap }}>
-          <Button variant="ghost" onClick={restart} disabled={current === 0}>
-            <RotateCcw className="mr-1 h-4 w-4" /> Restart
-          </Button>
-          <Button onClick={goNext} disabled={current === total - 1}>
-            Next <ChevronRight className="ml-1 h-4 w-4" />
-          </Button>
-        </div>
       </div>
+
+      <StatePanel
+        state={step?.state}
+      />
+
+      <PlaybackControls
+        currentStepIndex={currentStepIndex}
+        totalSteps={total}
+        onPrev={goPrev}
+        onNext={goNext}
+        onRestart={restart}
+        steps={steps}
+        onStepChange={setCurrentStepIndex}
+      />
     </div>
   );
 }

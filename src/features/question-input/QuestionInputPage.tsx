@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSolveQuestion } from "./useSolveQuestion";
-import { StoryViewerPage, type StoryData } from "../story-viewer/StoryViewerPage";
+import { StoryViewerPage } from "../story-viewer/StoryViewerPage";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Sparkles } from "lucide-react";
@@ -10,9 +10,11 @@ const EXAMPLE_PROMPTS = [
   "Insert the values [50, 30, 70, 20, 40, 60, 80] into a binary search tree.",
 ];
 
+import type { Story } from "../story-viewer/types";
+
 export function QuestionInputPage() {
   const [questionText, setQuestionText] = useState("");
-  const [story, setStory] = useState<StoryData | null>(null);
+  const [story, setStory] = useState<Story | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { solve, isLoading } = useSolveQuestion();
 
@@ -22,7 +24,9 @@ export function QuestionInputPage() {
     solve(
       { questionText },
       {
-        onSuccess: (data) => setStory(data as StoryData),
+        onSuccess: (data) => {
+          setStory(data as unknown as Story);
+        },
         onError: (err) => setErrorMsg(err.message),
       }
     );
@@ -31,11 +35,12 @@ export function QuestionInputPage() {
   if (story) {
     return (
       <StoryViewerPage
-        key={story.id}
         story={story}
+        questionText={questionText}
         onBack={() => {
           setStory(null);
           setErrorMsg(null);
+          setQuestionText("");
         }}
       />
     );
