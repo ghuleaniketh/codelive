@@ -5,13 +5,12 @@ import { TestRunnerState } from "@/pages/TestRunnerStatePage";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/CodeStoryStudioPage";
 import TestAuthPage from "./pages/TestAuthPage";
 import { TestScenesPage } from "./features/story-viewer/scenes/TestScenesPage";
 import { QuestionInputPage } from "./features/question-input/QuestionInputPage";
+import { sceneTokens } from "./features/story-viewer/scenes/sceneTokens";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/404"} component={NotFound} />
@@ -25,21 +24,24 @@ function Router() {
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider
-        defaultTheme="light"
+        defaultTheme="dark"
         switchable
       >
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <div
+            style={{
+              minHeight: "100vh",
+              backgroundColor: sceneTokens.surfaces.canvas,
+              color: sceneTokens.text.primary,
+            }}
+          >
+            <Router />
+          </div>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

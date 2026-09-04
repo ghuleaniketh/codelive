@@ -12,7 +12,6 @@ export const ConveyorLoopScene = ({
   initialItems: QueueItem[];
   actions: SceneAction[];
 }) => {
-  // Rebuild queue state from its seed plus every action in the current story prefix.
   const { items, highlightedId } = useMemo(() => {
     const queue = initialItems.map((item) => ({ ...item }));
     let highlighted: string | null = null;
@@ -34,29 +33,103 @@ export const ConveyorLoopScene = ({
     return { items: queue, highlightedId: highlighted };
   }, [initialItems, actions]);
 
-  const gap = 90;
-  const width = Math.max(300, items.length * gap + 96);
+  const boxWidth = sceneTokens.geometry.box.width;
+  const boxHeight = sceneTokens.geometry.box.height;
+  const gap = 84;
+  const width = Math.max(320, items.length * gap + 100);
 
   return (
-    <svg viewBox={`0 0 ${width} 150`} width={width} height={150} style={{ display: "block", maxWidth: "100%", height: "auto" }} aria-label="Queue conveyor loop">
-      <rect x="25" y="55" width={width - 50} height="56" rx="28" fill="#e2e8f0" stroke={sceneTokens.colors.connector} strokeWidth="2" />
-      <path d={`M 36 83 H ${width - 42}`} stroke="#94a3b8" strokeWidth="2" strokeDasharray="7 7" />
-      <text x="32" y="35" fill={sceneTokens.colors.muted} fontSize="11" fontWeight="700">FRONT</text>
-      <text x={width - 32} y="35" textAnchor="end" fill={sceneTokens.colors.muted} fontSize="11" fontWeight="700">BACK</text>
-      {items.length === 0 && <text x={width / 2} y="88" textAnchor="middle" dominantBaseline="middle" fill={sceneTokens.colors.muted} fontSize={sceneTokens.fontSizes.small}>queue is empty</text>}
+    <svg
+      viewBox={`0 0 ${width} 150`}
+      width={width}
+      height={150}
+      style={{ display: "block", maxWidth: "100%", height: "auto" }}
+      aria-label="Queue conveyor loop"
+    >
+      {/* Track base */}
+      <rect
+        x="24"
+        y="52"
+        width={width - 48}
+        height="60"
+        rx="30"
+        fill={sceneTokens.surfaces.subtle}
+        stroke={sceneTokens.borders.subtle}
+        strokeWidth={sceneTokens.geometry.stroke.default}
+      />
+      {/* Midline dashed conveyor belt */}
+      <path
+        d={`M 36 82 H ${width - 36}`}
+        stroke={sceneTokens.borders.contrast}
+        strokeWidth={sceneTokens.geometry.stroke.subtle}
+        strokeDasharray="6 6"
+      />
+
+      <text
+        x="32"
+        y="34"
+        fill={sceneTokens.text.muted}
+        fontSize={sceneTokens.typography.eyebrow.fontSize}
+        fontWeight={700}
+      >
+        FRONT
+      </text>
+      <text
+        x={width - 32}
+        y="34"
+        textAnchor="end"
+        fill={sceneTokens.text.muted}
+        fontSize={sceneTokens.typography.eyebrow.fontSize}
+        fontWeight={700}
+      >
+        BACK
+      </text>
+
+      {items.length === 0 && (
+        <text
+          x={width / 2}
+          y="84"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={sceneTokens.text.muted}
+          fontSize={sceneTokens.typography.caption.fontSize}
+        >
+          queue is empty
+        </text>
+      )}
+
       <AnimatePresence initial={false}>
         {items.map((item, index) => {
           const highlighted = highlightedId === item.id;
           return (
             <motion.g
               key={item.id}
-              initial={{ opacity: 0, x: items.length * gap + 60 }}
+              initial={{ opacity: 0, x: items.length * gap + 40 }}
               animate={{ opacity: 1, x: index * gap }}
-              exit={{ opacity: 0, x: -90, transition: { duration: 0.35 } }}
-              transition={{ type: "spring", stiffness: 260, damping: 24 }}
+              exit={{ opacity: 0, x: -80, transition: { duration: sceneTokens.motion.step } }}
+              transition={{ type: "spring", stiffness: 280, damping: 24 }}
             >
-              <rect x="42" y="63" width="68" height="40" rx="10" fill={highlighted ? "#fbbf24" : sceneTokens.colors.boxFill} stroke={highlighted ? "#d97706" : sceneTokens.colors.boxStroke} strokeWidth={highlighted ? 3 : sceneTokens.strokeWidths.box} />
-              <text x="76" y="83" textAnchor="middle" dominantBaseline="middle" fill={sceneTokens.colors.text} fontWeight="700" fontSize={sceneTokens.fontSizes.medium}>{item.value}</text>
+              <rect
+                x="40"
+                y="61"
+                width={boxWidth}
+                height={boxHeight}
+                rx={sceneTokens.radii.md}
+                fill={highlighted ? sceneTokens.status.active.fill : sceneTokens.surfaces.card}
+                stroke={highlighted ? sceneTokens.status.active.stroke : sceneTokens.borders.contrast}
+                strokeWidth={highlighted ? sceneTokens.geometry.stroke.emphasis : sceneTokens.geometry.stroke.default}
+              />
+              <text
+                x={40 + boxWidth / 2}
+                y={61 + boxHeight / 2}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={highlighted ? sceneTokens.status.active.glow : sceneTokens.text.primary}
+                fontWeight={700}
+                fontSize={sceneTokens.typography.code.fontSize}
+              >
+                {item.value}
+              </text>
             </motion.g>
           );
         })}

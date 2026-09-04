@@ -1,8 +1,7 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { sceneTokens } from "./sceneTokens";
 import { SceneAction } from "./types";
-
-const trayViewBox = "0 0 500 100";
 
 export const SortingTrayScene = ({
   initialArray,
@@ -11,140 +10,167 @@ export const SortingTrayScene = ({
   initialArray: Array<{ id: string; value: number }>;
   actions: SceneAction[];
 }) => {
-  const boxShapes = initialArray.map((item, index) => {
-    const bx = index * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap);
-    const by = 40;
-    return (
-      <motion.rect
-        key={item.id}
-        x={bx}
-        y={by}
-        width={sceneTokens.spacing.boxWidth}
-        height={sceneTokens.spacing.boxHeight}
-        fill={sceneTokens.colors.boxFill}
-        stroke={sceneTokens.colors.boxStroke}
-        strokeWidth={sceneTokens.strokeWidths.box}
-        whileHover={{ strokeWidth: sceneTokens.strokeWidths.box + 2 }}
-        whileTap={{ scale: 0.95 }}
-      />
-    );
-  });
+  // Replay swap actions from steps 0..current so array order accumulates
+  const currentArray = useMemo(() => {
+    const arr = initialArray.map((item) => ({ ...item }));
+    for (const action of actions) {
+      if (action.component === "Box" && action.action === "swap") {
+        const { box1Id, box2Id } = action.params as { box1Id: string; box2Id: string };
+        const idx1 = arr.findIndex((a) => a.id === String(box1Id));
+        const idx2 = arr.findIndex((a) => a.id === String(box2Id));
+        if (idx1 >= 0 && idx2 >= 0) {
+          const temp = arr[idx1];
+          arr[idx1] = arr[idx2];
+          arr[idx2] = temp;
+        }
+      }
+    }
+    return arr;
+  }, [initialArray, actions]);
 
-  const boxLabels = initialArray.map((item, index) => {
-    const bx = index * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap);
-    const by = 40;
-    return (
-      <text
-        key={`label-${item.id}`}
-        x={bx + sceneTokens.spacing.boxWidth / 2}
-        y={by + sceneTokens.spacing.boxHeight / 2}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={sceneTokens.colors.text}
-        fontSize={sceneTokens.fontSizes.medium}
-      >
-        {item.value}
-      </text>
-    );
-  });
+  // Identify active comparison IDs (highlights both box1Id and box2Id)
+  const comparedIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const action of actions) {
+      if (action.component === "Box" && action.action === "compare") {
+        const { box1Id, box2Id } = action.params as { box1Id: string; box2Id: string };
+        if (box1Id != null) set.add(String(box1Id));
+        if (box2Id != null) set.add(String(box2Id));
+      }
+    }
+    return set;
+  }, [actions]);
 
-  const actionElements = actions.map((action, i) => {
-    if (action.component === "Box" && action.action === "compare") {
-      const { params } = action;
-      const box1 = initialArray.find((a) => a.id === params.box1Id);
-      const box2 = initialArray.find((a) => a.id === params.box2Id);
-      if (box1 && box2) {
-        const idx1 = initialArray.indexOf(box1);
-        const idx2 = initialArray.indexOf(box2);
-        return (
-          <motion.rect
-            key={`compare-${i}-${box1.id}-${box2.id}`}
-            x={idx1 * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap)}
-            y={40}
-            width={sceneTokens.spacing.boxWidth}
-            height={sceneTokens.spacing.boxHeight}
-            fill={sceneTokens.colors.highlight}
-            stroke={sceneTokens.colors.highlight}
-            strokeWidth={sceneTokens.strokeWidths.box + 2}
-            transition={{ duration: 0.3 }}
-          />
-        );
+  // Identify general highlight IDs
+  const highlightedIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const action of actions) {
+      if (action.component === "Box" && action.action === "highlight") {
+        const { boxId } = action.params as { boxId: string };
+        if (boxId != null) set.add(String(boxId));
       }
     }
-    if (action.component === "Box" && action.action === "swap") {
-      const { params } = action;
-      const box1 = initialArray.find((a) => a.id === params.box1Id);
-      const box2 = initialArray.find((a) => a.id === params.box2Id);
-      if (box1 && box2) {
-        const idx1 = initialArray.indexOf(box1);
-        const idx2 = initialArray.indexOf(box2);
-        return (
-          <motion.rect
-            key={`swap-${i}-${box1.id}-${box2.id}`}
-            x={idx2 * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap)}
-            y={40}
-            width={sceneTokens.spacing.boxWidth}
-            height={sceneTokens.spacing.boxHeight}
-            fill={sceneTokens.colors.boxFill}
-            stroke={sceneTokens.colors.boxStroke}
-            strokeWidth={sceneTokens.strokeWidths.box}
-            transition={{ duration: 0.4 }}
-          />
-        );
+    return set;
+  }, [actions]);
+
+  // Pointer labels map: boxId -> label
+  const pointers = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const action of actions) {
+      if (action.component === "Box" && action.action === "setPointer") {
+        const { boxId, label } = action.params as { boxId: string; label: string };
+        if (boxId != null && label != null) {
+          map.set(String(boxId), String(label));
+        }
       }
     }
-    if (action.component === "Box" && action.action === "highlight") {
-      const { params } = action;
-      const box = initialArray.find((a) => a.id === params.boxId);
-      if (box) {
-        const idx = initialArray.indexOf(box);
-        return (
-          <motion.rect
-            key={`highlight-${i}-${box.id}`}
-            x={idx * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap)}
-            y={40}
-            width={sceneTokens.spacing.boxWidth}
-            height={sceneTokens.spacing.boxHeight}
-            fill={sceneTokens.colors.highlight}
-            stroke={sceneTokens.colors.highlight}
-            strokeWidth={sceneTokens.strokeWidths.box + 2}
-            transition={{ duration: 0.3 }}
-          />
-        );
-      }
-    }
-    if (action.component === "Box" && action.action === "setPointer") {
-      const { params } = action;
-      const box = initialArray.find((a) => a.id === params.boxId);
-      if (box) {
-        const idx = initialArray.indexOf(box);
-        const centerX = idx * (sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap) + sceneTokens.spacing.boxWidth / 2;
-        return (
-          <text
-            x={centerX}
-            y={75}
-            textAnchor="middle"
-            fill={sceneTokens.colors.text}
-            fontSize={sceneTokens.fontSizes.small}
-          >
-            {String(params.label || "")}
-          </text>
-        );
-      }
-    }
-    return null;
-  });
+    return map;
+  }, [actions]);
+
+  const boxWidth = sceneTokens.geometry.box.width;
+  const boxHeight = sceneTokens.geometry.box.height;
+  const gap = sceneTokens.spacing[3];
+  const stride = boxWidth + gap;
+  const marginX = sceneTokens.spacing[5];
+  const boxY = 28;
+  const width = Math.max(currentArray.length * stride + marginX * 2, 340);
+  const height = 110;
 
   return (
     <svg
-      viewBox={trayViewBox}
-      width={500}
-      height={100}
+      viewBox={`0 0 ${width} ${height}`}
+      width={width}
+      height={height}
       style={{ display: "block", maxWidth: "100%", height: "auto" }}
+      aria-label="Sorting tray visualizer"
     >
-      {boxShapes}
-      {actionElements}
-      {boxLabels}
+      {currentArray.map((item, index) => {
+        const targetX = marginX + index * stride;
+        const isCompared = comparedIds.has(item.id);
+        const isHighlighted = highlightedIds.has(item.id);
+        const pointerLabel = pointers.get(item.id);
+
+        const fill = isCompared || isHighlighted
+          ? sceneTokens.status.active.fill
+          : sceneTokens.surfaces.card;
+        const stroke = isCompared
+          ? sceneTokens.status.active.stroke
+          : isHighlighted
+          ? sceneTokens.status.active.glow
+          : sceneTokens.borders.contrast;
+        const strokeWidth = isCompared || isHighlighted
+          ? sceneTokens.geometry.stroke.emphasis
+          : sceneTokens.geometry.stroke.default;
+
+        return (
+          <motion.g
+            key={item.id}
+            initial={false}
+            animate={{ x: targetX }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 24,
+              duration: sceneTokens.motion.step,
+            }}
+          >
+            {/* Box slot */}
+            <rect
+              x={0}
+              y={boxY}
+              width={boxWidth}
+              height={boxHeight}
+              rx={sceneTokens.radii.md}
+              fill={fill}
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+            />
+
+            {/* Value label */}
+            <text
+              x={boxWidth / 2}
+              y={boxY + boxHeight / 2}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill={isCompared || isHighlighted ? sceneTokens.status.active.glow : sceneTokens.text.primary}
+              fontSize={sceneTokens.typography.code.fontSize}
+              fontWeight={600}
+            >
+              {item.value}
+            </text>
+
+            {/* Index label above box */}
+            <text
+              x={boxWidth / 2}
+              y={boxY - 10}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill={sceneTokens.text.muted}
+              fontSize={sceneTokens.typography.eyebrow.fontSize}
+              fontWeight={sceneTokens.typography.eyebrow.fontWeight}
+            >
+              [{index}]
+            </text>
+
+            {/* Pointer below box if set */}
+            {pointerLabel && (
+              <g>
+                <text
+                  x={boxWidth / 2}
+                  y={boxY + boxHeight + 20}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill={sceneTokens.status.mutated.glow}
+                  fontSize={sceneTokens.typography.caption.fontSize}
+                  fontWeight={600}
+                >
+                  ↑ {pointerLabel}
+                </text>
+              </g>
+            )}
+          </motion.g>
+        );
+      })}
     </svg>
   );
 };

@@ -6,9 +6,6 @@ import { SceneAction } from "./types";
 type AccNode = { id: string; value: number; x: number; y: number };
 type AccEdge = { from: string; to: string; side?: "left" | "right" };
 
-// Deterministic BST-style layout: in-order traversal left->right, depth -> y.
-// This lets nodes inserted into an initially-empty tree receive stable
-// coordinates so the SVG can reflow/resize as the tree grows.
 function computeTreeLayout(
   nodes: AccNode[],
   edges: AccEdge[]
@@ -41,18 +38,18 @@ function computeTreeLayout(
     }
   });
 
-  const xSpacing = 70;
-  const ySpacing = 70;
-  const marginX = 35;
-  const marginY = 35;
+  const xSpacing = 72;
+  const ySpacing = 72;
+  const marginX = 36;
+  const marginY = 36;
   const pos: Record<string, { x: number; y: number }> = {};
   order.forEach((id, i) => {
     pos[id] = { x: marginX + i * xSpacing, y: marginY + depth[id] * ySpacing };
   });
 
   const maxDepth = order.reduce((m, id) => Math.max(m, depth[id] ?? 0), 0);
-  const width = Math.max(marginX * 2 + (order.length - 1) * xSpacing, 80);
-  const height = Math.max(marginY * 2 + maxDepth * ySpacing, 120);
+  const width = Math.max(marginX * 2 + (order.length - 1) * xSpacing, 120);
+  const height = Math.max(marginY * 2 + maxDepth * ySpacing, 140);
   return { pos, width, height };
 }
 
@@ -65,8 +62,6 @@ export const FamilyTreeScene = ({
   initialEdges: Array<{ from: string; to: string }>;
   actions: SceneAction[];
 }) => {
-  // ACCUMULATED state: replay all actions (steps 0..current) over the seed so
-  // an empty initialData builds up, and Prev/Next rebuilds deterministically.
   const { nodes, edges } = useMemo(() => {
     const accNodes: AccNode[] = initialNodes.map((n) => ({ ...n }));
     const accEdges: AccEdge[] = initialEdges.map((e) => ({ ...e }));
@@ -101,6 +96,8 @@ export const FamilyTreeScene = ({
     [nodes, edges]
   );
 
+  const nodeRadius = sceneTokens.geometry.nodeRadius;
+
   const nodeShapes = nodes.map((node) => {
     const p = pos[node.id] ?? { x: node.x, y: node.y };
     return (
@@ -108,11 +105,11 @@ export const FamilyTreeScene = ({
         key={node.id}
         cx={p.x}
         cy={p.y}
-        r={16}
-        fill={sceneTokens.colors.boxFill}
-        stroke={sceneTokens.colors.boxStroke}
-        strokeWidth={sceneTokens.strokeWidths.node}
-        whileHover={{ r: 20, strokeWidth: sceneTokens.strokeWidths.node + 2 }}
+        r={nodeRadius}
+        fill={sceneTokens.surfaces.card}
+        stroke={sceneTokens.borders.contrast}
+        strokeWidth={sceneTokens.geometry.stroke.default}
+        whileHover={{ r: nodeRadius + 3, strokeWidth: sceneTokens.geometry.stroke.emphasis }}
         whileTap={{ scale: 0.95 }}
       />
     );
@@ -127,8 +124,9 @@ export const FamilyTreeScene = ({
         y={p.y}
         textAnchor="middle"
         dominantBaseline="middle"
-        fill={sceneTokens.colors.text}
-        fontSize={sceneTokens.fontSizes.small}
+        fill={sceneTokens.text.primary}
+        fontSize={sceneTokens.typography.code.fontSize}
+        fontWeight={600}
       >
         {node.value}
       </text>
@@ -146,22 +144,20 @@ export const FamilyTreeScene = ({
         y1={from.y}
         x2={to.x}
         y2={to.y}
-        stroke={sceneTokens.colors.connector}
-        strokeWidth={sceneTokens.strokeWidths.edge}
-        strokeDasharray="5, 5"
-        whileHover={{ strokeWidth: sceneTokens.strokeWidths.edge + 2 }}
+        stroke={sceneTokens.borders.contrast}
+        strokeWidth={sceneTokens.geometry.stroke.default}
+        strokeDasharray="4 4"
       />
     );
   });
 
-  const treeViewBox = `0 0 ${width} ${height}`;
-
   return (
     <svg
-      viewBox={treeViewBox}
+      viewBox={`0 0 ${width} ${height}`}
       width={width}
       height={height}
       style={{ display: "block", maxWidth: "100%", height: "auto" }}
+      aria-label="Family tree visualizer"
     >
       {nodes.length === 0 && (
         <text
@@ -169,8 +165,8 @@ export const FamilyTreeScene = ({
           y={height / 2}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={sceneTokens.colors.muted}
-          fontSize={sceneTokens.fontSizes.small}
+          fill={sceneTokens.text.muted}
+          fontSize={sceneTokens.typography.caption.fontSize}
         >
           (empty tree)
         </text>
@@ -187,11 +183,11 @@ export const FamilyTreeScene = ({
               key={`visit-${i}-${nodeId}`}
               cx={p.x}
               cy={p.y}
-              r={16}
-              fill={sceneTokens.colors.highlight}
-              stroke={sceneTokens.colors.highlight}
-              strokeWidth={sceneTokens.strokeWidths.node + 2}
-              transition={{ duration: 0.3 }}
+              r={nodeRadius}
+              fill={sceneTokens.status.active.fill}
+              stroke={sceneTokens.status.active.stroke}
+              strokeWidth={sceneTokens.geometry.stroke.emphasis}
+              transition={{ duration: sceneTokens.motion.step }}
             />
           );
         }
@@ -208,20 +204,20 @@ export const FamilyTreeScene = ({
               <motion.circle
                 cx={p1.x}
                 cy={p1.y}
-                r={16}
-                fill={sceneTokens.colors.highlight}
-                stroke={sceneTokens.colors.highlight}
-                strokeWidth={sceneTokens.strokeWidths.node + 2}
-                transition={{ duration: 0.3 }}
+                r={nodeRadius}
+                fill={sceneTokens.status.active.fill}
+                stroke={sceneTokens.status.active.stroke}
+                strokeWidth={sceneTokens.geometry.stroke.emphasis}
+                transition={{ duration: sceneTokens.motion.step }}
               />
               <motion.circle
                 cx={p2.x}
                 cy={p2.y}
-                r={16}
-                fill={sceneTokens.colors.highlight}
-                stroke={sceneTokens.colors.highlight}
-                strokeWidth={sceneTokens.strokeWidths.node + 2}
-                transition={{ duration: 0.3 }}
+                r={nodeRadius}
+                fill={sceneTokens.status.active.fill}
+                stroke={sceneTokens.status.active.stroke}
+                strokeWidth={sceneTokens.geometry.stroke.emphasis}
+                transition={{ duration: sceneTokens.motion.step }}
               />
             </g>
           );
@@ -238,11 +234,11 @@ export const FamilyTreeScene = ({
               key={`insert-${i}-${newNodeId}`}
               cx={p.x}
               cy={p.y}
-              r={16}
-              fill={sceneTokens.colors.highlight}
-              stroke={sceneTokens.colors.highlight}
-              strokeWidth={sceneTokens.strokeWidths.node + 2}
-              transition={{ duration: 0.4 }}
+              r={nodeRadius}
+              fill={sceneTokens.status.mutated.fill}
+              stroke={sceneTokens.status.mutated.stroke}
+              strokeWidth={sceneTokens.geometry.stroke.emphasis}
+              transition={{ duration: sceneTokens.motion.step }}
             />
           );
         }
@@ -261,19 +257,19 @@ export const FamilyTreeScene = ({
           if (candidateValue === undefined) return null;
           const node = nodes.find((n) => n.id === existingId);
           const base = node ? pos[node.id] : { x: width / 2, y: height / 2 };
-          const ghostX = base.x + 48;
-          const ghostY = base.y - 34;
+          const ghostX = base.x + 44;
+          const ghostY = base.y - 32;
           return (
             <g key={`candidate-${i}-${existingId}-${candidateValue}`}>
               {node && (
                 <motion.circle
                   cx={base.x}
                   cy={base.y}
-                  r={16}
-                  fill={sceneTokens.colors.highlight}
-                  stroke={sceneTokens.colors.highlight}
-                  strokeWidth={sceneTokens.strokeWidths.node + 2}
-                  transition={{ duration: 0.3 }}
+                  r={nodeRadius}
+                  fill={sceneTokens.status.active.fill}
+                  stroke={sceneTokens.status.active.stroke}
+                  strokeWidth={sceneTokens.geometry.stroke.emphasis}
+                  transition={{ duration: sceneTokens.motion.step }}
                 />
               )}
               <motion.line
@@ -281,33 +277,34 @@ export const FamilyTreeScene = ({
                 y1={base.y}
                 x2={ghostX}
                 y2={ghostY}
-                stroke={sceneTokens.colors.highlight}
-                strokeWidth={1}
-                strokeDasharray="3,3"
+                stroke={sceneTokens.status.active.stroke}
+                strokeWidth={sceneTokens.geometry.stroke.subtle}
+                strokeDasharray="3 3"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.7 }}
-                transition={{ duration: 0.3 }}
+                animate={{ opacity: 0.8 }}
+                transition={{ duration: sceneTokens.motion.step }}
               />
               <motion.circle
                 cx={ghostX}
                 cy={ghostY}
-                r={16}
+                r={nodeRadius}
                 fill="transparent"
-                stroke={sceneTokens.colors.highlight}
-                strokeWidth={sceneTokens.strokeWidths.node}
-                strokeDasharray="4,4"
+                stroke={sceneTokens.status.active.stroke}
+                strokeWidth={sceneTokens.geometry.stroke.default}
+                strokeDasharray="4 4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: sceneTokens.motion.step }}
               />
               <text
                 x={ghostX}
                 y={ghostY}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fill={sceneTokens.colors.highlight}
-                fontSize={sceneTokens.fontSizes.small}
+                fill={sceneTokens.status.active.glow}
+                fontSize={sceneTokens.typography.code.fontSize}
                 fontStyle="italic"
+                fontWeight={600}
               >
                 {String(candidateValue)}
               </text>

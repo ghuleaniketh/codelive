@@ -12,8 +12,6 @@ export const RecursionStairsScene = ({
   initialFrames: CallFrame[];
   actions: SceneAction[];
 }) => {
-  // Frames are replayed from the seed on every step. We deliberately show every
-  // frame still in accumulated state, even if a partial unwind looks irregular.
   const { frames, backtrackedIds } = useMemo(() => {
     const stack = initialFrames.map((frame) => ({ ...frame }));
     const backtracked = new Set<string>();
@@ -43,30 +41,101 @@ export const RecursionStairsScene = ({
     return { frames: stack.sort((a, b) => a.depth - b.depth), backtrackedIds: backtracked };
   }, [initialFrames, actions]);
 
-  const stepHeight = 68;
-  const height = Math.max(150, (Math.max(-1, ...frames.map((frame) => frame.depth)) + 1) * stepHeight + 70);
+  const stepHeight = 60;
+  const height = Math.max(160, (Math.max(-1, ...frames.map((frame) => frame.depth)) + 1) * stepHeight + 70);
 
   return (
-    <svg viewBox={`0 0 430 ${height}`} width={430} height={height} style={{ display: "block", maxWidth: "100%", height: "auto" }} aria-label="Recursion call stack">
-      <text x="30" y="27" fill={sceneTokens.colors.muted} fontSize="11" fontWeight="700">ROOT CALL</text>
-      {frames.length === 0 && <text x="215" y={height / 2} textAnchor="middle" fill={sceneTokens.colors.muted} fontSize={sceneTokens.fontSizes.small}>call stack is empty</text>}
+    <svg
+      viewBox={`0 0 430 ${height}`}
+      width={430}
+      height={height}
+      style={{ display: "block", maxWidth: "100%", height: "auto" }}
+      aria-label="Recursion call stack stairs"
+    >
+      <text
+        x="30"
+        y="26"
+        fill={sceneTokens.text.muted}
+        fontSize={sceneTokens.typography.eyebrow.fontSize}
+        fontWeight={700}
+      >
+        ROOT CALL
+      </text>
+
+      {frames.length === 0 && (
+        <text
+          x="215"
+          y={height / 2}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={sceneTokens.text.muted}
+          fontSize={sceneTokens.typography.caption.fontSize}
+        >
+          call stack is empty
+        </text>
+      )}
+
       <AnimatePresence initial={false}>
         {frames.map((frame) => {
           const isBacktracking = backtrackedIds.has(frame.id);
-          const y = 42 + frame.depth * stepHeight;
-          const x = 30 + frame.depth * 24;
-          const width = 350 - frame.depth * 24;
+          const y = 40 + frame.depth * stepHeight;
+          const x = 30 + frame.depth * 22;
+          const width = 360 - frame.depth * 22;
+
+          const fill = isBacktracking
+            ? sceneTokens.status.backtrack.fill
+            : sceneTokens.surfaces.card;
+          const stroke = isBacktracking
+            ? sceneTokens.status.backtrack.stroke
+            : sceneTokens.borders.contrast;
+          const strokeWidth = isBacktracking
+            ? sceneTokens.geometry.stroke.emphasis
+            : sceneTokens.geometry.stroke.default;
+
           return (
             <motion.g
               key={frame.id}
-              initial={{ opacity: 0, y: y - 22 }}
+              initial={{ opacity: 0, y: y - 20 }}
               animate={{ opacity: 1, y }}
-              exit={{ opacity: 0, x: 46, transition: { duration: 0.32 } }}
+              exit={{ opacity: 0, x: 44, transition: { duration: sceneTokens.motion.step } }}
               transition={{ type: "spring", stiffness: 280, damping: 24 }}
             >
-              <rect x={x} y="0" width={Math.max(155, width)} height="48" rx="10" fill={isBacktracking ? "#ffedd5" : sceneTokens.colors.boxFill} stroke={isBacktracking ? "#ea580c" : sceneTokens.colors.boxStroke} strokeWidth={isBacktracking ? 3 : sceneTokens.strokeWidths.box} />
-              <text x={x + 16} y="24" dominantBaseline="middle" fill={sceneTokens.colors.text} fontSize={sceneTokens.fontSizes.medium} fontWeight="700" textDecoration={isBacktracking ? "line-through" : undefined}>{frame.label}</text>
-              <text x={x + Math.max(155, width) - 14} y="24" textAnchor="end" dominantBaseline="middle" fill={isBacktracking ? "#c2410c" : sceneTokens.colors.muted} fontSize="11" fontWeight="700">{isBacktracking ? "backtrack" : frame.returnValue !== undefined ? `returns ${String(frame.returnValue)}` : `depth ${frame.depth}`}</text>
+              <rect
+                x={x}
+                y="0"
+                width={Math.max(160, width)}
+                height="46"
+                rx={sceneTokens.radii.md}
+                fill={fill}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+              />
+              <text
+                x={x + 16}
+                y="23"
+                dominantBaseline="middle"
+                fill={isBacktracking ? sceneTokens.status.backtrack.glow : sceneTokens.text.primary}
+                fontSize={sceneTokens.typography.code.fontSize}
+                fontWeight={700}
+                textDecoration={isBacktracking ? "line-through" : undefined}
+              >
+                {frame.label}
+              </text>
+              <text
+                x={x + Math.max(160, width) - 14}
+                y="23"
+                textAnchor="end"
+                dominantBaseline="middle"
+                fill={isBacktracking ? sceneTokens.status.backtrack.glow : sceneTokens.text.muted}
+                fontSize={sceneTokens.typography.caption.fontSize}
+                fontWeight={600}
+              >
+                {isBacktracking
+                  ? "backtrack"
+                  : frame.returnValue !== undefined
+                  ? `returns ${String(frame.returnValue)}`
+                  : `depth ${frame.depth}`}
+              </text>
             </motion.g>
           );
         })}

@@ -10,10 +10,7 @@ export const StorageShelfScene = ({
   initialSlots: Array<{ key: string; value: unknown | null }>;
   actions: SceneAction[];
 }) => {
-  // ACCUMULATED state: replay every action (steps 0..current) on top of the
-  // initial seed. This is what makes an empty initialData build up correctly
-  // and what makes Prev/Next deterministic (state at step N depends on all
-  // insert actions from step 0 through N, not just the current step).
+  // Replay actions to build accumulated slot state
   const slots = useMemo(() => {
     const acc = initialSlots.map((s) => ({ ...s }));
     for (const action of actions) {
@@ -33,82 +30,38 @@ export const StorageShelfScene = ({
     return acc;
   }, [initialSlots, actions]);
 
-  const stride = sceneTokens.spacing.boxWidth + sceneTokens.spacing.gap;
+  const boxWidth = sceneTokens.geometry.box.width;
+  const boxHeight = sceneTokens.geometry.box.height;
+  const gap = sceneTokens.spacing[3];
+  const stride = boxWidth + gap;
+  const marginX = sceneTokens.spacing[5];
+  const boxY = 32;
 
-  const slotShapes = slots.map((slot, index) => {
-    const bx = index * stride;
-    const by = 40;
-    return (
-      <motion.rect
-        key={slot.key}
-        x={bx}
-        y={by}
-        width={sceneTokens.spacing.boxWidth}
-        height={sceneTokens.spacing.boxHeight}
-        fill={slot.value === null ? "#f1f5f9" : sceneTokens.colors.boxFill}
-        stroke={sceneTokens.colors.boxStroke}
-        strokeWidth={sceneTokens.strokeWidths.box}
-        whileHover={{ strokeWidth: sceneTokens.strokeWidths.box + 2 }}
-      />
-    );
-  });
+  const contentWidth = marginX * 2 + slots.length * stride;
+  const width = Math.max(contentWidth, 320);
+  const height = 110;
 
-  const slotLabels = slots.map((slot, index) => {
-    const bx = index * stride;
-    const by = 40;
-    return (
-      <g key={`label-${slot.key}`}>
-        <text
-          x={bx + sceneTokens.spacing.boxWidth / 2}
-          y={by + 15}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill={sceneTokens.colors.text}
-          fontSize={sceneTokens.fontSizes.medium}
-        >
-          {slot.key}
-        </text>
-        {slot.value !== null && slot.value !== undefined && (
-          <text
-            x={bx + sceneTokens.spacing.boxWidth - 10}
-            y={by + 30}
-            textAnchor="end"
-            dominantBaseline="middle"
-            fill={sceneTokens.colors.text}
-            fontSize={sceneTokens.fontSizes.small}
-          >
-            {String(slot.value)}
-          </text>
-        )}
-      </g>
-    );
-  });
-
-  const contentWidth = slots.length * stride;
-  const shelfWidth = Math.max(contentWidth, 40);
-  const shelfHeight = Math.max(40 + sceneTokens.spacing.boxHeight + 20, 120);
-  const shelfViewBox = `0 0 ${shelfWidth} ${shelfHeight}`;
-
-  const highlightFor = (action: SceneAction): number | null => {
+  const getActionHighlight = (action: SceneAction): { idx: number; isInsert: boolean } | null => {
     if (action.component === "Slot" && action.action === "insert") {
       const { key } = action.params as { key: string };
       const idx = slots.findIndex((s) => s.key === key);
-      return idx;
+      return idx >= 0 ? { idx, isInsert: true } : null;
     }
     if (action.component === "Slot" && action.action === "lookup") {
       const { key } = action.params as { key: string; found?: boolean };
       const idx = slots.findIndex((s) => s.key === key);
-      return idx;
+      return idx >= 0 ? { idx, isInsert: false } : null;
     }
     if (action.component === "Slot" && action.action === "highlight") {
       const p = action.params as { key?: string; indices?: unknown };
       if (p.key != null) {
-        return slots.findIndex((s) => s.key === p.key);
+        const idx = slots.findIndex((s) => s.key === p.key);
+        return idx >= 0 ? { idx, isInsert: false } : null;
       }
       const idxArr = Array.isArray(p.indices) ? p.indices : [];
       if (idxArr.length > 0) {
         const i = Number(idxArr[0]);
-        return i >= 0 && i < slots.length ? i : null;
+        return i >= 0 && i < slots.length ? { idx: i, isInsert: false } : null;
       }
     }
     return null;
@@ -116,43 +69,96 @@ export const StorageShelfScene = ({
 
   return (
     <svg
-      viewBox={shelfViewBox}
-      width={shelfWidth}
-      height={shelfHeight}
+      viewBox={`0 0 ${width} ${height}`}
+      width={width}
+      height={height}
       style={{ display: "block", maxWidth: "100%", height: "auto" }}
+      aria-label="Storage shelf hash visualizer"
     >
       {slots.length === 0 && (
         <text
-          x={shelfWidth / 2}
-          y={shelfHeight / 2}
+          x={width / 2}
+          y={height / 2}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={sceneTokens.colors.muted}
-          fontSize={sceneTokens.fontSizes.small}
+          fill={sceneTokens.text.muted}
+          fontSize={sceneTokens.typography.caption.fontSize}
         >
           (empty shelf)
         </text>
       )}
-      {slotShapes}
+
+      {slots.map((slot, index) => {
+        const bx = marginX + index * stride;
+        const isEmpty = slot.value === null || slot.value === undefined;
+
+        return (
+          <g key={slot.key}>
+            {/* Slot Box */}
+            <motion.rect
+              x={bx}
+              y={boxY}
+              width={boxWidth}
+              height={boxHeight}
+              rx={sceneTokens.radii.md}
+              fill={isEmpty ? sceneTokens.status.eliminated.fill : sceneTokens.surfaces.card}
+              stroke={isEmpty ? sceneTokens.borders.subtle : sceneTokens.borders.contrast}
+              strokeWidth={sceneTokens.geometry.stroke.default}
+            />
+
+            {/* Key header label */}
+            <text
+              x={bx + boxWidth / 2}
+              y={boxY + 14}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill={sceneTokens.text.secondary}
+              fontSize={sceneTokens.typography.caption.fontSize}
+              fontWeight={500}
+            >
+              {slot.key}
+            </text>
+
+            {/* Value label */}
+            {!isEmpty && (
+              <text
+                x={bx + boxWidth / 2}
+                y={boxY + 28}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={sceneTokens.text.primary}
+                fontSize={sceneTokens.typography.code.fontSize}
+                fontWeight={700}
+              >
+                {String(slot.value)}
+              </text>
+            )}
+          </g>
+        );
+      })}
+
+      {/* Action highlights */}
       {actions.map((action, i) => {
-        const idx = highlightFor(action);
-        if (idx === null || idx < 0) return null;
-        const bx = idx * stride;
+        const res = getActionHighlight(action);
+        if (!res) return null;
+        const bx = marginX + res.idx * stride;
+        const statusConfig = res.isInsert ? sceneTokens.status.mutated : sceneTokens.status.active;
+
         return (
           <motion.rect
-            key={`hl-${i}-${action.action}-${idx}`}
+            key={`hl-${i}-${action.action}-${res.idx}`}
             x={bx}
-            y={40}
-            width={sceneTokens.spacing.boxWidth}
-            height={sceneTokens.spacing.boxHeight}
-            fill={sceneTokens.colors.highlight}
-            stroke={sceneTokens.colors.highlight}
-            strokeWidth={sceneTokens.strokeWidths.box + 2}
-            transition={{ duration: 0.3 }}
+            y={boxY}
+            width={boxWidth}
+            height={boxHeight}
+            rx={sceneTokens.radii.md}
+            fill={statusConfig.fill}
+            stroke={statusConfig.stroke}
+            strokeWidth={sceneTokens.geometry.stroke.emphasis}
+            transition={{ duration: sceneTokens.motion.step }}
           />
         );
       })}
-      {slotLabels}
     </svg>
   );
 };

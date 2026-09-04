@@ -14,9 +14,6 @@ export const LinkedChainScene = ({
   initialHeadId: string | null;
   actions: SceneAction[];
 }) => {
-  // ACCUMULATED state: replay every action (steps 0..current) on top of the
-  // seed, exactly like FamilyTreeScene/StorageShelfScene. This is what makes
-  // "build from empty" work and keeps Prev/Next deterministic.
   const { headId, nodes, pointers } = useMemo(() => {
     const acc = new Map<string, AccNode>(
       initialNodes.map((n) => [n.id, { ...n }])
@@ -81,52 +78,45 @@ export const LinkedChainScene = ({
     };
   }, [initialNodes, initialHeadId, actions]);
 
-  // Layout ALL accumulated nodes horizontally. No head-reachability filter:
-  // every node that exists in state after replaying steps 0..current is shown,
-  // with its actual `next` pointer visualized by an arrow. This is essential for
-  // reversal stories where head/next are mid-redirect — hiding "unreachable" nodes
-  // would make nodes appear/disappear mid-animation, which is the exact bug reported.
-  const nodeW = 70;
-  const nodeH = 44;
-  const gapX = 56;
-  const marginX = 40;
-  const baseY = 60;
-  const pointerY = baseY + nodeH + 36;
+  const nodeW = sceneTokens.geometry.box.width;
+  const nodeH = sceneTokens.geometry.box.height;
+  const gapX = 48;
+  const marginX = sceneTokens.spacing[5];
+  const baseY = 28;
+  const pointerY = baseY + nodeH + 32;
 
   const contentWidth =
     marginX * 2 + (nodes.length - 1) * (nodeW + gapX) + nodeW;
-  const width = Math.max(contentWidth, 120);
-  const height = pointerY + 40;
+  const width = Math.max(contentWidth, 320);
+  const height = pointerY + 36;
 
-  // Positions: nodes laid out left-to-right in accumulated order
   const positions: Record<string, { x: number; y: number }> = {};
   nodes.forEach((node, i) => {
     positions[node.id] = { x: marginX + i * (nodeW + gapX), y: baseY };
   });
 
-  // Node shapes: show ALL accumulated nodes
-  const nodeShapes = nodes.map((node, i) => {
+  const nodeShapes = nodes.map((node) => {
     const p = positions[node.id];
     return (
       <g key={`node-${node.id}`}>
-        <motion.rect
+        <rect
           x={p.x}
           y={p.y}
           width={nodeW}
           height={nodeH}
-          rx={sceneTokens.radii.card / 2}
-          fill={sceneTokens.colors.boxFill}
-          stroke={sceneTokens.colors.boxStroke}
-          strokeWidth={sceneTokens.strokeWidths.box}
-          whileHover={{ strokeWidth: sceneTokens.strokeWidths.box + 2 }}
+          rx={sceneTokens.radii.md}
+          fill={sceneTokens.surfaces.card}
+          stroke={sceneTokens.borders.contrast}
+          strokeWidth={sceneTokens.geometry.stroke.default}
         />
         <text
           x={p.x + nodeW / 2}
           y={p.y + nodeH / 2}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={sceneTokens.colors.text}
-          fontSize={sceneTokens.fontSizes.medium}
+          fill={sceneTokens.text.primary}
+          fontSize={sceneTokens.typography.code.fontSize}
+          fontWeight={600}
         >
           {node.value}
         </text>
@@ -134,8 +124,6 @@ export const LinkedChainScene = ({
     );
   });
 
-  // Outgoing `next` arrow for each node, following its actual `next` pointer.
-  // If next is null or points to a node not in accumulated state, no arrow.
   const arrowShapes = nodes.map((node) => {
     const p = positions[node.id];
     if (!node.next || !positions[node.next]) return null;
@@ -152,21 +140,18 @@ export const LinkedChainScene = ({
         y1={y1}
         x2={x2 - 6}
         y2={y2}
-        stroke={sceneTokens.colors.connector}
-        strokeWidth={sceneTokens.strokeWidths.connector}
+        stroke={sceneTokens.borders.contrast}
+        strokeWidth={sceneTokens.geometry.stroke.default}
         markerEnd="url(#lc-arrow)"
       />
     );
   });
 
-  // Pointer markers: for each named pointer (head, slow, fast, etc.), render
-  // a labeled marker below the node it points to. If nodeId is null, show "→ ∅".
   const pointersByNode: Record<string, string[]> = {};
   const nullPointers: string[] = [];
   Object.entries(pointers).forEach(([name, target]) => {
     if (target == null || target === "") nullPointers.push(name);
     else {
-      // render under any node that exists in accumulated state
       const targetNode = nodes.find((n) => n.id === target);
       if (targetNode) {
         (pointersByNode[target] ??= []).push(name);
@@ -184,8 +169,8 @@ export const LinkedChainScene = ({
           y1={p.y + nodeH}
           x2={p.x + nodeW / 2}
           y2={pointerY - 4 + i * 16}
-          stroke={sceneTokens.colors.highlight}
-          strokeWidth={sceneTokens.strokeWidths.connector}
+          stroke={sceneTokens.status.mutated.stroke}
+          strokeWidth={sceneTokens.geometry.stroke.default}
           markerEnd="url(#lc-ptr)"
         />
         <text
@@ -193,9 +178,9 @@ export const LinkedChainScene = ({
           y={pointerY + 12 + i * 16}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={sceneTokens.colors.highlight}
-          fontSize={sceneTokens.fontSizes.small}
-          fontWeight="bold"
+          fill={sceneTokens.status.mutated.glow}
+          fontSize={sceneTokens.typography.caption.fontSize}
+          fontWeight={700}
         >
           {name}
         </text>
@@ -210,8 +195,8 @@ export const LinkedChainScene = ({
         y={pointerY + 12}
         textAnchor="middle"
         dominantBaseline="middle"
-        fill={sceneTokens.colors.muted}
-        fontSize={sceneTokens.fontSizes.small}
+        fill={sceneTokens.text.muted}
+        fontSize={sceneTokens.typography.caption.fontSize}
         fontStyle="italic"
       >
         {nullPointers.map((n) => `${n} → ∅`).join("   ")}
@@ -224,6 +209,7 @@ export const LinkedChainScene = ({
       width={width}
       height={height}
       style={{ display: "block", maxWidth: "100%", height: "auto" }}
+      aria-label="Linked list visualizer"
     >
       <defs>
         <marker
@@ -234,7 +220,7 @@ export const LinkedChainScene = ({
           refY="4"
           orient="auto"
         >
-          <path d="M0,0 L8,4 L0,8 Z" fill={sceneTokens.colors.connector} />
+          <path d="M0,0 L8,4 L0,8 Z" fill={sceneTokens.borders.contrast} />
         </marker>
         <marker
           id="lc-ptr"
@@ -244,7 +230,7 @@ export const LinkedChainScene = ({
           refY="4"
           orient="auto"
         >
-          <path d="M0,0 L8,4 L0,8 Z" fill={sceneTokens.colors.highlight} />
+          <path d="M0,0 L8,4 L0,8 Z" fill={sceneTokens.status.mutated.stroke} />
         </marker>
       </defs>
 
@@ -254,8 +240,8 @@ export const LinkedChainScene = ({
           y={height / 2}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={sceneTokens.colors.muted}
-          fontSize={sceneTokens.fontSizes.small}
+          fill={sceneTokens.text.muted}
+          fontSize={sceneTokens.typography.caption.fontSize}
         >
           (empty list)
         </text>
@@ -264,7 +250,6 @@ export const LinkedChainScene = ({
       {arrowShapes}
       {nodeShapes}
 
-      {/* Action highlights for the current step(s). */}
       {actions.map((action, i) => {
         if (action.component !== "ListNode") return null;
         if (action.action === "visit") {
@@ -278,11 +263,11 @@ export const LinkedChainScene = ({
               y={p.y}
               width={nodeW}
               height={nodeH}
-              rx={sceneTokens.radii.card / 2}
-              fill={sceneTokens.colors.highlight}
-              stroke={sceneTokens.colors.highlight}
-              strokeWidth={sceneTokens.strokeWidths.box + 2}
-              transition={{ duration: 0.3 }}
+              rx={sceneTokens.radii.md}
+              fill={sceneTokens.status.active.fill}
+              stroke={sceneTokens.status.active.stroke}
+              strokeWidth={sceneTokens.geometry.stroke.emphasis}
+              transition={{ duration: sceneTokens.motion.step }}
             />
           );
         }
@@ -297,11 +282,11 @@ export const LinkedChainScene = ({
               y={p.y}
               width={nodeW}
               height={nodeH}
-              rx={sceneTokens.radii.card / 2}
-              fill={sceneTokens.colors.highlight}
-              stroke={sceneTokens.colors.highlight}
-              strokeWidth={sceneTokens.strokeWidths.box + 2}
-              transition={{ duration: 0.4 }}
+              rx={sceneTokens.radii.md}
+              fill={sceneTokens.status.mutated.fill}
+              stroke={sceneTokens.status.mutated.stroke}
+              strokeWidth={sceneTokens.geometry.stroke.emphasis}
+              transition={{ duration: sceneTokens.motion.step }}
             />
           );
         }
@@ -316,11 +301,11 @@ export const LinkedChainScene = ({
               y={p.y}
               width={nodeW}
               height={nodeH}
-              rx={sceneTokens.radii.card / 2}
-              fill={sceneTokens.colors.muted}
-              stroke={sceneTokens.colors.muted}
-              strokeWidth={sceneTokens.strokeWidths.box + 2}
-              transition={{ duration: 0.3 }}
+              rx={sceneTokens.radii.md}
+              fill={sceneTokens.status.eliminated.fill}
+              stroke={sceneTokens.status.eliminated.stroke}
+              strokeWidth={sceneTokens.geometry.stroke.emphasis}
+              transition={{ duration: sceneTokens.motion.step }}
             />
           );
         }
@@ -335,38 +320,13 @@ export const LinkedChainScene = ({
               y={p.y}
               width={nodeW}
               height={nodeH}
-              rx={sceneTokens.radii.card / 2}
+              rx={sceneTokens.radii.md}
               fill="transparent"
-              stroke={sceneTokens.colors.highlight}
-              strokeWidth={sceneTokens.strokeWidths.box + 2}
-              strokeDasharray="4,4"
-              transition={{ duration: 0.3 }}
+              stroke={sceneTokens.status.active.stroke}
+              strokeWidth={sceneTokens.geometry.stroke.emphasis}
+              strokeDasharray="4 4"
+              transition={{ duration: sceneTokens.motion.step }}
             />
-          );
-        }
-        if (action.action === "setPointer") {
-          const { name, nodeId } = action.params as {
-            name: string;
-            nodeId: string | null;
-          };
-          const p = nodeId ? positions[nodeId] : null;
-          if (!p) return null;
-          return (
-            <motion.text
-              key={`ptr-hl-${i}-${name}`}
-              x={p.x + nodeW / 2}
-              y={pointerY + 12}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={sceneTokens.colors.highlight}
-              fontSize={sceneTokens.fontSizes.small}
-              fontWeight="bold"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              {name}
-            </motion.text>
           );
         }
         return null;

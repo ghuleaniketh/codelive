@@ -34,21 +34,12 @@ export const WorkshopScene = ({
   };
   actions: SceneAction[];
 }) => {
-  // Effective width available for the SVG: parent section has maxWidth=920
-  // with padding=12 on each side, leaving ~880px of content width.
-  const EFFECTIVE_WIDTH = 880;
+  const bitWidth = Math.max(1, initialData?.bitWidth || 8);
+  const hasSecond = initialData?.secondValue !== undefined;
 
-  // Calculate box width dynamically: minimum 20px (readable), maximum 80px
-  // (original size), scaled down as bitWidth grows so total width stays bounded.
-  // For bitWidth=8: boxWidth=80, total=640px; bitWidth=16: boxWidth=55, total=880px;
-  // bitWidth=32: boxWidth=27.5, total=880px. All fit without overflow.
-  const boxWidth = Math.min(80, Math.max(20, EFFECTIVE_WIDTH / initialData.bitWidth));
-
-  // ACCUMULATED bit state: replay every action from steps 0..current on top
-  // of the seed initialData. This is the established cumulative-replay pattern.
-  const bitStates = useMemo<BitState[][]>(() => {
-    // Seed from initialValue
-    let acc = bitsFromNumber(initialData.initialValue, initialData.bitWidth);
+  // Replay actions to accumulate bit state
+  const currentBits = useMemo<BitState[]>(() => {
+    let acc = bitsFromNumber(initialData?.initialValue ?? 0, bitWidth);
 
     for (const action of actions) {
       if (action.component !== "Bit") continue;
@@ -59,7 +50,7 @@ export const WorkshopScene = ({
             position: number;
             value: number;
           };
-          if (position >= 0 && position < initialData.bitWidth) {
+          if (position >= 0 && position < bitWidth) {
             acc[position] = value === 0 || value === 1 ? value : acc[position] === 0 ? 1 : 0;
           }
           break;
@@ -67,8 +58,6 @@ export const WorkshopScene = ({
         case "shiftLeft": {
           const { amount } = action.params as { amount: number };
           const shift = amount ?? 1;
-          // All bits slide left; bits that fall off the MSA disappear;
-          // new 0s appear at the LSB (right) end.
           acc = acc.slice(shift).concat(Array(shift).fill(0) as BitState[]);
           break;
         }
@@ -76,7 +65,7 @@ export const WorkshopScene = ({
           const { amount } = action.params as { amount: number };
           const shift = amount ?? 1;
           const newAcc: BitState[] = [];
-          for (let i = 0; i < initialData.bitWidth; i++) {
+          for (let i = 0; i < bitWidth; i++) {
             if (i < shift) {
               newAcc.push(0 as BitState);
             } else {
@@ -91,7 +80,7 @@ export const WorkshopScene = ({
             operator: string;
             operandValue: number;
           };
-          const mask = (1 << initialData.bitWidth) - 1;
+          const mask = (1 << bitWidth) - 1;
           const accValue = decimalFromBits(acc);
           let result: number;
           switch (operator) {
@@ -107,268 +96,250 @@ export const WorkshopScene = ({
             default:
               result = accValue;
           }
-          acc = bitsFromNumber(result, initialData.bitWidth);
-          break;
-        }
-        case "highlight": {
-          // Highlight does not change bit values; we track it separately for rendering.
+          acc = bitsFromNumber(result, bitWidth);
           break;
         }
         default:
           break;
       }
     }
-    return [acc];
-  }, [actions, initialData.bitWidth, initialData.initialValue, initialData.secondValue]);
+    return acc;
+  }, [actions, bitWidth, initialData?.initialValue]);
 
-  const currentBits = bitStates[bitStates.length - 1];
-
-  // Track highlighted positions from the most recent highlight action
+  // Track highlighted positions from actions
   const highlightedPositions = useMemo<number[]>(() => {
-    const pos: number[] = [];
     for (let i = actions.length - 1; i >= 0; i--) {
       const a = actions[i];
-      if (a.component !== "Bit") continue;
-      if (a.action === "highlight") {
+      if (a.component === "Bit" && a.action === "highlight") {
         const { positions } = a.params as { positions: number[] };
         if (positions && positions.length > 0) {
           return positions;
         }
       }
     }
-    return pos;
+    return [];
+  }, [actions]);
+
+  // Derive active operation summary
+  const lastOpAction = useMemo(() => {
+    for (let i = actions.length - 1; i >= 0; i--) {
+      const a = actions[i];
+      if (a.component === "Bit" && a.action !== "highlight") {
+        return a;
+      }
+    }
+    return null;
   }, [actions]);
 
   const decimalValue = decimalFromBits(currentBits);
 
-  // Highlight styling: amber overlay for specified positions
-  const bitHighlights = currentBits.map((_bit, i) => {
-    if (highlightedPositions.includes(i)) {
-      return {
-        fill: "rgba(254, 217, 57, 0.4)",
-        stroke: "#fbbf24",
-        strokeWidth: 2,
-      };
+  // Layout calculations
+  const cellWidth = Math.min(52, Math.max(28, 440 / bitWidth));
+  const cellHeight = 44;
+  const cellGap = 6;
+  const stride = cellWidth + cellGap;
+  const startX = hasSecond ? 48 : 24;
+  const totalBitRowWidth = bitWidth * stride;
+
+  const totalWidth = Math.max(startX + totalBitRowWidth + 120, 360);
+  const totalHeight = hasSecond ? 190 : 130;
+
+  const secondBits = hasSecond
+    ? bitsFromNumber(initialData.secondValue!, bitWidth)
+    : [];
+
+  const renderOpLabel = () => {
+    if (!lastOpAction) return null;
+    let label = "";
+    switch (lastOpAction.action) {
+      case "setBit":
+        label = `setBit(${lastOpAction.params.position}, ${lastOpAction.params.value})`;
+        break;
+      case "shiftLeft":
+        label = `<< shiftLeft ${lastOpAction.params.amount ?? 1}`;
+        break;
+      case "shiftRight":
+        label = `>> shiftRight ${lastOpAction.params.amount ?? 1}`;
+        break;
+      case "applyOp":
+        label = `${lastOpAction.params.operator} ${lastOpAction.params.operandValue}`;
+        break;
+      default:
+        break;
     }
-    return {
-      fill: sceneTokens.colors.boxFill,
-      stroke: sceneTokens.colors.boxStroke,
-      strokeWidth: 1,
-    };
-  });
+    if (!label) return null;
 
-  // Effective total width used for positioning.
-  const totalBitWidth = initialData.bitWidth * boxWidth;
-
-  return (
-    <div>
-      {/* Labels above the bit rows */}
-      {initialData.secondValue !== undefined && (
+    return (
+      <g>
+        <rect
+          x={startX}
+          y={hasSecond ? 150 : 92}
+          width={label.length * 8 + 20}
+          height={22}
+          rx={sceneTokens.radii.sm}
+          fill={sceneTokens.status.mutated.fill}
+          stroke={sceneTokens.status.mutated.stroke}
+          strokeWidth={sceneTokens.geometry.stroke.subtle}
+        />
         <text
-          x={EFFECTIVE_WIDTH / 2 + 20}
-          y={15}
+          x={startX + (label.length * 8 + 20) / 2}
+          y={hasSecond ? 162 : 104}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={sceneTokens.colors.muted}
-          fontSize={sceneTokens.fontSizes.small}
+          fill={sceneTokens.status.mutated.glow}
+          fontSize={sceneTokens.typography.eyebrow.fontSize}
+          fontWeight={700}
+        >
+          {label}
+        </text>
+      </g>
+    );
+  };
+
+  return (
+    <svg
+      viewBox={`0 0 ${totalWidth} ${totalHeight}`}
+      width={totalWidth}
+      height={totalHeight}
+      style={{ display: "block", maxWidth: "100%", height: "auto" }}
+      aria-label="Bitwise workshop visualizer"
+    >
+      {/* Row A Indicator */}
+      {hasSecond && (
+        <text
+          x={20}
+          y={20 + cellHeight / 2}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={sceneTokens.text.muted}
+          fontSize={sceneTokens.typography.caption.fontSize}
+          fontWeight={700}
         >
           A
         </text>
       )}
-      {initialData.secondValue !== undefined && (
-        <text
-          x={EFFECTIVE_WIDTH / 2 + 20}
-          y={95}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill={sceneTokens.colors.muted}
-          fontSize={sceneTokens.fontSizes.small}
-        >
-          B
-        </text>
-      )}
 
-      <svg
-        viewBox={`0 0 ${totalBitWidth + 40} ${130}`}
-        width={totalBitWidth + 40}
-        height={130}
-        style={{ display: "block", marginBottom: 20 }}
-      >
-        {/* First row of bits */}
-        {currentBits.map((bit, i) => (
-          <g
-            key={`bit-${i}`}
-            transform={`translate(${40 + i * boxWidth})`}
-          >
+      {/* Row A Bit Cells */}
+      {currentBits.map((bit, i) => {
+        const isHighlighted = highlightedPositions.includes(i);
+        const bx = startX + i * stride;
+        const by = 20;
+
+        return (
+          <g key={`bit-a-${i}`}>
             <motion.rect
-              x={0}
-              y={0}
-              width={70}
-              height={70}
-              rx={8}
-              fill={bitHighlights[i].fill}
-              stroke={bitHighlights[i].stroke}
-              strokeWidth={bitHighlights[i].strokeWidth}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              x={bx}
+              y={by}
+              width={cellWidth}
+              height={cellHeight}
+              rx={sceneTokens.radii.sm}
+              fill={isHighlighted ? sceneTokens.status.active.fill : sceneTokens.surfaces.card}
+              stroke={isHighlighted ? sceneTokens.status.active.stroke : sceneTokens.borders.contrast}
+              strokeWidth={isHighlighted ? sceneTokens.geometry.stroke.emphasis : sceneTokens.geometry.stroke.default}
+              transition={{ duration: sceneTokens.motion.step }}
             />
             <text
-              x={35}
-              y={45}
+              x={bx + cellWidth / 2}
+              y={by + cellHeight / 2}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill={bit === 0 ? sceneTokens.colors.muted : sceneTokens.colors.text}
-              fontSize={sceneTokens.fontSizes.medium}
+              fill={
+                isHighlighted
+                  ? sceneTokens.status.active.glow
+                  : bit === 1
+                  ? sceneTokens.text.primary
+                  : sceneTokens.text.muted
+              }
+              fontSize={sceneTokens.typography.code.fontSize}
+              fontWeight={700}
             >
               {bit}
             </text>
+            <text
+              x={bx + cellWidth / 2}
+              y={by - 8}
+              textAnchor="middle"
+              fill={sceneTokens.text.muted}
+              fontSize={9}
+            >
+              {bitWidth - 1 - i}
+            </text>
           </g>
-        ))}
+        );
+      })}
 
-        {/* Second row of bits (below the first row) */}
-        {initialData.secondValue !== undefined && (
-          <g transform="translate(0, 90)">
-            {bitsFromNumber(initialData.secondValue, initialData.bitWidth).map((bit, i) => (
-              <g
-                key={`bit2-${i}`}
-                transform={`translate(${40 + i * boxWidth})`}
-              >
-                <motion.rect
-                  x={0}
-                  y={0}
-                  width={70}
-                  height={70}
-                  rx={8}
-                  fill={sceneTokens.colors.boxFill}
-                  stroke={sceneTokens.colors.boxStroke}
-                  strokeWidth={1}
+      {/* Decimal Value readout */}
+      <text
+        x={startX + totalBitRowWidth + 24}
+        y={20 + cellHeight / 2}
+        textAnchor="start"
+        dominantBaseline="middle"
+        fill={sceneTokens.text.primary}
+        fontSize={sceneTokens.typography.title.fontSize}
+        fontWeight={700}
+      >
+        = {decimalValue}
+      </text>
+
+      {/* Row B Bit Cells (if second operand present) */}
+      {hasSecond && (
+        <>
+          <text
+            x={20}
+            y={82 + cellHeight / 2}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill={sceneTokens.text.muted}
+            fontSize={sceneTokens.typography.caption.fontSize}
+            fontWeight={700}
+          >
+            B
+          </text>
+          {secondBits.map((bit, i) => {
+            const bx = startX + i * stride;
+            const by = 82;
+            return (
+              <g key={`bit-b-${i}`}>
+                <rect
+                  x={bx}
+                  y={by}
+                  width={cellWidth}
+                  height={cellHeight}
+                  rx={sceneTokens.radii.sm}
+                  fill={sceneTokens.surfaces.card}
+                  stroke={sceneTokens.borders.contrast}
+                  strokeWidth={sceneTokens.geometry.stroke.default}
                 />
                 <text
-                  x={35}
-                  y={45}
+                  x={bx + cellWidth / 2}
+                  y={by + cellHeight / 2}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fill={bit === 0 ? sceneTokens.colors.muted : sceneTokens.colors.text}
-                  fontSize={sceneTokens.fontSizes.medium}
+                  fill={bit === 1 ? sceneTokens.text.primary : sceneTokens.text.muted}
+                  fontSize={sceneTokens.typography.code.fontSize}
+                  fontWeight={700}
                 >
                   {bit}
                 </text>
               </g>
-            ))}
-          </g>
-        )}
+            );
+          })}
+          <text
+            x={startX + totalBitRowWidth + 24}
+            y={82 + cellHeight / 2}
+            textAnchor="start"
+            dominantBaseline="middle"
+            fill={sceneTokens.text.secondary}
+            fontSize={sceneTokens.typography.narrative.fontSize}
+            fontWeight={600}
+          >
+            = {initialData.secondValue}
+          </text>
+        </>
+      )}
 
-        {/* Decimal value label - centered on effective width */}
-        <text
-          x={EFFECTIVE_WIDTH / 2 + 20}
-          y={55}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill={sceneTokens.colors.text}
-          fontSize={sceneTokens.fontSizes.medium}
-        >
-          = {decimalValue}
-        </text>
-      </svg>
-
-      {/* Operation labels below the bit row */}
-      {actions.map((action, i) => {
-        if (action.component !== "Bit") return null;
-
-        switch (action.action) {
-          case "setBit": {
-            const { position, value } = action.params as {
-              position: number;
-              value: number;
-            };
-            const xPos = 40 + position * boxWidth + boxWidth / 2;
-            return (
-              <text
-                key={`sp-${i}`}
-                x={xPos}
-                y={100}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#10b981"
-                fontSize={sceneTokens.fontSizes.small}
-              >
-                setBit({position}, {value})
-              </text>
-            );
-          }
-          case "shiftLeft": {
-            return (
-              <text
-                key={`sl-${i}`}
-                x={40 + boxWidth / 2}
-                y={100}
-                textAnchor="start"
-                dominantBaseline="middle"
-                fill="#fbbf24"
-                fontSize={sceneTokens.fontSizes.small}
-              >
-                shiftLeft {action.params.amount ?? 1}
-              </text>
-            );
-          }
-          case "shiftRight": {
-            const lastIdx = initialData.bitWidth - 1;
-            const xPos = 40 + lastIdx * boxWidth + boxWidth / 2;
-            return (
-              <text
-                key={`sr-${i}`}
-                x={xPos}
-                y={100}
-                textAnchor="end"
-                dominantBaseline="middle"
-                fill="#fbbf24"
-                fontSize={sceneTokens.fontSizes.small}
-              >
-                shiftRight {action.params.amount ?? 1}
-              </text>
-            );
-          }
-          case "applyOp": {
-            // Visual "AND"/"OR"/"XOR" operand is now rendered as the second row
-            // of bit boxes above; keep a minimal text label for the operator.
-            const { operator, operandValue } = action.params as {
-              operator: string;
-              operandValue: number;
-            };
-            return (
-              <text
-                key={`ao-${i}`}
-                x={EFFECTIVE_WIDTH / 2 + 20}
-                y={100}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#fbbf24"
-                fontSize={sceneTokens.fontSizes.small}
-              >
-                {operator} {operandValue}
-              </text>
-            );
-          }
-          case "highlight": {
-            const { positions } = action.params as { positions: number[] };
-            return (
-              <text
-                key={`hl-${i}`}
-                x={EFFECTIVE_WIDTH / 2 + 20}
-                y={100}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#fbbf24"
-                fontSize={sceneTokens.fontSizes.small}
-              >
-                highlight positions {positions.join(",")}
-              </text>
-            );
-          }
-          default:
-            return null;
-        }
-      })}
-    </div>
+      {/* Operation badge label */}
+      {renderOpLabel()}
+    </svg>
   );
 };

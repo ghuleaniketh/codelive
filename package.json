@@ -17,13 +17,11 @@
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@react-three/fiber": "^9.7.0",
     "@tanstack/react-query": "^5.90.2",
     "@trpc/client": "^11.6.0",
     "@trpc/react-query": "^11.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "d3-force-3d": "^3.0.6",
     "firebase": "^12.18.0",
     "framer-motion": "^13.1.1",
     "lucide-react": "^0.453.0",
@@ -33,7 +31,6 @@
     "sonner": "^2.0.7",
     "superjson": "^1.13.3",
     "tailwind-merge": "^3.3.1",
-    "three": "^0.185.1",
     "wouter": "^3.3.5"
   },
   "devDependencies": {

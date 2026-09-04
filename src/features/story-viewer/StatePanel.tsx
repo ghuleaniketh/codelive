@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { sceneTokens } from "./scenes/sceneTokens";
 
 export function StatePanel({
   state,
@@ -20,47 +20,83 @@ export function StatePanel({
     <div
       style={{
         width: "100%",
-        maxWidth: 560,
-        marginTop: 8,
-        background: "rgba(255, 255, 255, 0.03)",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-        borderRadius: 12,
-        padding: 12,
+        background: sceneTokens.surfaces.panel,
+        border: `1px solid ${sceneTokens.borders.subtle}`,
+        borderRadius: sceneTokens.radii.lg,
+        padding: sceneTokens.spacing[3],
       }}
     >
-      <p
+      <div
         style={{
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          color: "rgba(255, 255, 255, 0.5)",
-          marginBottom: 8,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: sceneTokens.spacing[2],
+          paddingBottom: sceneTokens.spacing[2],
+          borderBottom: `1px solid ${sceneTokens.borders.subtle}`,
         }}
       >
-        Variable state
-      </p>
-      <div>
+        <span
+          style={{
+            fontSize: sceneTokens.typography.eyebrow.fontSize,
+            fontWeight: sceneTokens.typography.eyebrow.fontWeight,
+            letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
+            textTransform: "uppercase",
+            color: sceneTokens.text.secondary,
+          }}
+        >
+          Variable State
+        </span>
+        <span
+          style={{
+            fontSize: sceneTokens.typography.caption.fontSize,
+            color: sceneTokens.text.muted,
+          }}
+        >
+          {entries.length} tracked
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
+          gap: sceneTokens.spacing[2],
+        }}
+      >
         {entries.map(([key, value], idx) => (
           <div
             key={idx}
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: 4,
-              marginBottom: 4,
-              fontSize: 13,
+              flexDirection: "column",
+              padding: `${sceneTokens.spacing[1]}px ${sceneTokens.spacing[2]}px`,
+              background: sceneTokens.surfaces.card,
+              borderRadius: sceneTokens.radii.sm,
+              border: `1px solid ${sceneTokens.borders.subtle}`,
             }}
           >
             <span
               style={{
-                width: 60,
-                fontFamily: "ui-monospace, monospace",
-                color: "rgba(255, 255, 255, 0.6)",
+                fontFamily: '"JetBrains Mono", "SF Mono", monospace',
+                fontSize: sceneTokens.typography.caption.fontSize,
+                color: sceneTokens.text.secondary,
+                fontWeight: 500,
               }}
             >
               {key}
             </span>
-            <span>{String(value)}</span>
+            <span
+              style={{
+                fontFamily: '"JetBrains Mono", "SF Mono", monospace',
+                fontSize: sceneTokens.typography.code.fontSize,
+                color: sceneTokens.status.active.glow,
+                fontWeight: 700,
+                marginTop: 2,
+              }}
+            >
+              {String(value)}
+            </span>
           </div>
         ))}
       </div>

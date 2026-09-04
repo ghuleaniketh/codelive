@@ -4,13 +4,13 @@ import { StoryViewerPage } from "../story-viewer/StoryViewerPage";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Sparkles } from "lucide-react";
+import { sceneTokens } from "../story-viewer/scenes/sceneTokens";
+import type { Story } from "../story-viewer/types";
 
 const EXAMPLE_PROMPTS = [
   "Sort an array of integers in ascending order using bubble sort.",
   "Insert the values [50, 30, 70, 20, 40, 60, 80] into a binary search tree.",
 ];
-
-import type { Story } from "../story-viewer/types";
 
 export function QuestionInputPage() {
   const [questionText, setQuestionText] = useState("");
@@ -27,7 +27,7 @@ export function QuestionInputPage() {
         onSuccess: (data) => {
           setStory(data as unknown as Story);
         },
-        onError: (err) => setErrorMsg(err.message),
+        onError: (err: { message?: string }) => setErrorMsg(err?.message || "Failed to solve problem."),
       }
     );
   };
@@ -50,29 +50,55 @@ export function QuestionInputPage() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#0b1220",
-        color: "#e2e8f0",
+        backgroundColor: sceneTokens.surfaces.canvas,
+        color: sceneTokens.text.primary,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: 24,
-        gap: 20,
+        padding: sceneTokens.spacing[6],
+        gap: sceneTokens.spacing[5],
       }}
     >
       <div style={{ width: "100%", maxWidth: 640 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-          <Sparkles className="h-6 w-6 text-amber-300" aria-hidden="true" />
-          <h1 style={{ fontSize: 22, fontWeight: 800 }}>Solve a DSA problem</h1>
+        <div style={{ display: "flex", alignItems: "center", gap: sceneTokens.spacing[2], marginBottom: sceneTokens.spacing[2] }}>
+          <Sparkles className="h-6 w-6" style={{ color: sceneTokens.status.active.glow }} aria-hidden="true" />
+          <h1
+            style={{
+              fontSize: sceneTokens.typography.display.fontSize,
+              lineHeight: `${sceneTokens.typography.display.lineHeight}px`,
+              fontWeight: sceneTokens.typography.display.fontWeight,
+              letterSpacing: sceneTokens.typography.display.letterSpacing,
+              margin: 0,
+            }}
+          >
+            Solve a DSA problem
+          </h1>
         </div>
-        <p style={{ fontSize: 14, color: "#94a3b8", marginBottom: 16 }}>
+        <p
+          style={{
+            fontSize: sceneTokens.typography.body.fontSize,
+            lineHeight: `${sceneTokens.typography.body.lineHeight}px`,
+            color: sceneTokens.text.secondary,
+            marginBottom: sceneTokens.spacing[4],
+            marginTop: 0,
+          }}
+        >
           Paste a problem statement. We generate code, run it, and build a step-by-step
           visual story you can walk through. This takes several seconds.
         </p>
 
         <label
           htmlFor="question-text"
-          style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.16em", color: "#94a3b8" }}
+          style={{
+            display: "block",
+            fontSize: sceneTokens.typography.eyebrow.fontSize,
+            fontWeight: sceneTokens.typography.eyebrow.fontWeight,
+            letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
+            textTransform: "uppercase",
+            color: sceneTokens.text.secondary,
+            marginBottom: sceneTokens.spacing[2],
+          }}
         >
           Problem statement
         </label>
@@ -85,30 +111,33 @@ export function QuestionInputPage() {
           }}
           placeholder="e.g. Sort an array of integers in ascending order…"
           rows={8}
+          className="focus-visible:ring-1 focus-visible:ring-[#38bdf8] focus-visible:border-[#38bdf8] transition-all"
           style={{
-            marginTop: 8,
-            background: "#0f172a",
-            borderColor: "#1e293b",
-            color: "#e2e8f0",
-            fontSize: 14,
+            background: sceneTokens.surfaces.panel,
+            borderColor: sceneTokens.borders.contrast,
+            color: sceneTokens.text.primary,
+            fontSize: sceneTokens.typography.body.fontSize,
             lineHeight: 1.6,
+            borderRadius: sceneTokens.radii.md,
           }}
         />
 
-        <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ marginTop: sceneTokens.spacing[3], display: "flex", flexWrap: "wrap", gap: sceneTokens.spacing[2] }}>
           {EXAMPLE_PROMPTS.map((prompt) => (
             <button
               key={prompt}
               type="button"
               onClick={() => setQuestionText(prompt)}
+              className="hover:border-[#38bdf8] hover:text-[#f8fafc] hover:bg-[#162238] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8]"
               style={{
-                fontSize: 12,
-                padding: "6px 10px",
-                borderRadius: 999,
-                border: "1px solid #1e293b",
-                background: "#0f172a",
-                color: "#cbd5e1",
+                fontSize: sceneTokens.typography.caption.fontSize,
+                padding: `${sceneTokens.spacing[1]}px ${sceneTokens.spacing[3]}px`,
+                borderRadius: sceneTokens.radii.full,
+                border: `1px solid ${sceneTokens.borders.contrast}`,
+                background: sceneTokens.surfaces.panel,
+                color: sceneTokens.text.secondary,
                 cursor: "pointer",
+                transition: `all ${sceneTokens.motion.micro}s ease`,
               }}
             >
               Use example: {prompt.length > 38 ? prompt.slice(0, 38) + "…" : prompt}
@@ -120,13 +149,13 @@ export function QuestionInputPage() {
           <div
             role="alert"
             style={{
-              marginTop: 16,
-              padding: 12,
-              borderRadius: 12,
-              border: "1px solid #f87171",
-              background: "rgba(248,113,113,0.12)",
-              color: "#fecaca",
-              fontSize: 13,
+              marginTop: sceneTokens.spacing[4],
+              padding: sceneTokens.spacing[3],
+              borderRadius: sceneTokens.radii.md,
+              border: `1px solid ${sceneTokens.status.error.stroke}`,
+              background: sceneTokens.status.error.fill,
+              color: sceneTokens.status.error.glow,
+              fontSize: sceneTokens.typography.code.fontSize,
               whiteSpace: "pre-wrap",
             }}
           >
@@ -134,14 +163,70 @@ export function QuestionInputPage() {
           </div>
         )}
 
+        {/* Dedicated Loading Card when solving */}
+        {isLoading && (
+          <div
+            style={{
+              marginTop: sceneTokens.spacing[4],
+              padding: `${sceneTokens.spacing[4]}px`,
+              borderRadius: sceneTokens.radii.lg,
+              border: `1px solid ${sceneTokens.borders.subtle}`,
+              background: sceneTokens.surfaces.panel,
+              display: "flex",
+              flexDirection: "column",
+              gap: sceneTokens.spacing[2],
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: sceneTokens.spacing[3] }}>
+              <Loader2 className="h-5 w-5 animate-spin" style={{ color: sceneTokens.status.mutated.glow }} />
+              <div>
+                <p style={{ margin: 0, fontSize: sceneTokens.typography.narrative.fontSize, fontWeight: 700, color: sceneTokens.text.primary }}>
+                  Constructing your Code Story…
+                </p>
+                <p style={{ margin: 0, fontSize: sceneTokens.typography.caption.fontSize, color: sceneTokens.text.secondary }}>
+                  Synthesizing algorithm logic, variable traces, and scene step actions.
+                </p>
+              </div>
+            </div>
+            <div
+              style={{
+                width: "100%",
+                height: 4,
+                backgroundColor: sceneTokens.surfaces.card,
+                borderRadius: sceneTokens.radii.full,
+                overflow: "hidden",
+                marginTop: sceneTokens.spacing[1],
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: sceneTokens.status.mutated.stroke,
+                  animation: "pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         <Button
           onClick={handleSubmit}
           disabled={!questionText.trim() || isLoading}
-          style={{ marginTop: 16, width: "100%", height: 44 }}
+          className="hover:opacity-90 active:scale-[0.99] transition-all focus-visible:ring-2 focus-visible:ring-[#38bdf8]"
+          style={{
+            marginTop: sceneTokens.spacing[4],
+            width: "100%",
+            height: 44,
+            borderRadius: sceneTokens.radii.md,
+            backgroundColor: sceneTokens.status.active.stroke,
+            color: "#090d16",
+            fontWeight: 700,
+          }}
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating story…
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Solving problem…
             </>
           ) : (
             <>

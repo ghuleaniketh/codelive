@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-
 import { sceneTokens } from "./scenes/sceneTokens";
 
 type CodePanelProps = {
@@ -52,36 +51,100 @@ export const CodePanel = ({
     <div
       style={{
         width: "100%",
-        overflowX: "auto",
-        borderRadius: 12,
-        border: `1px solid ${sceneTokens.colors.connector}`,
-        background: "rgba(15, 23, 42, 0.72)",
-        padding: "8px 0",
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: sceneTokens.radii.lg,
+        border: `1px solid ${sceneTokens.borders.subtle}`,
+        background: sceneTokens.surfaces.panel,
+        overflow: "hidden",
       }}
       aria-label={`Code snippet in ${languageId}`}
     >
-      {lines.map((line, idx) => {
-        const isHighlighted = highlightedSet.has(idx + 1);
-        return (
-          <div
-            key={idx + 1}
+      {/* Code Header Bar */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: `${sceneTokens.spacing[2]}px ${sceneTokens.spacing[4]}px`,
+          borderBottom: `1px solid ${sceneTokens.borders.subtle}`,
+          background: sceneTokens.surfaces.canvas,
+        }}
+      >
+        <span
+          style={{
+            fontSize: sceneTokens.typography.eyebrow.fontSize,
+            fontWeight: sceneTokens.typography.eyebrow.fontWeight,
+            letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
+            textTransform: "uppercase",
+            color: sceneTokens.text.secondary,
+          }}
+        >
+          {languageId}
+        </span>
+        {highlightedSet.size > 0 && (
+          <span
             style={{
-              display: "flex",
-              alignItems: "center",
-              minHeight: 20,
-              padding: "4px 12px",
-              fontFamily: '"SF Mono", "Fira Mono", "Ubuntu Mono", monospace',
-              fontSize: 13,
-              lineHeight: 1.6,
-              whiteSpace: "pre",
-              color: sceneTokens.colors.text,
-              background: isHighlighted ? "rgba(59, 130, 246, 0.22)" : "transparent",
+              fontSize: sceneTokens.typography.caption.fontSize,
+              color: sceneTokens.status.mutated.glow,
+              fontWeight: 600,
             }}
           >
-            {line || " "}
-          </div>
-        );
-      })}
+            Lines {Array.from(highlightedSet).join(", ")}
+          </span>
+        )}
+      </div>
+
+      {/* Code Lines Container */}
+      <div
+        style={{
+          overflowX: "auto",
+          padding: `${sceneTokens.spacing[2]}px 0`,
+          maxHeight: "420px",
+          overflowY: "auto",
+        }}
+      >
+        {lines.map((line, idx) => {
+          const lineNum = idx + 1;
+          const isHighlighted = highlightedSet.has(lineNum);
+          return (
+            <div
+              key={lineNum}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                minHeight: 22,
+                padding: `2px ${sceneTokens.spacing[3]}px`,
+                fontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace',
+                fontSize: sceneTokens.typography.code.fontSize,
+                lineHeight: 1.5,
+                whiteSpace: "pre",
+                color: isHighlighted ? sceneTokens.text.primary : sceneTokens.text.secondary,
+                background: isHighlighted ? sceneTokens.status.mutated.fill : "transparent",
+                borderLeft: isHighlighted
+                  ? `3px solid ${sceneTokens.status.mutated.stroke}`
+                  : "3px solid transparent",
+              }}
+            >
+              {/* Line number gutter */}
+              <span
+                style={{
+                  width: 32,
+                  flexShrink: 0,
+                  userSelect: "none",
+                  textAlign: "right",
+                  marginRight: sceneTokens.spacing[3],
+                  color: isHighlighted ? sceneTokens.status.mutated.glow : sceneTokens.text.muted,
+                  fontSize: sceneTokens.typography.caption.fontSize,
+                }}
+              >
+                {lineNum}
+              </span>
+              <span>{line || " "}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
