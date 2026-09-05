@@ -6,9 +6,11 @@ import { SceneAction } from "./types";
 export const SortingTrayScene = ({
   initialArray,
   actions,
+  state,
 }: {
   initialArray: Array<{ id: string; value: number }>;
   actions: SceneAction[];
+  state?: Record<string, string | number | boolean>;
 }) => {
   // Replay swap actions from steps 0..current so array order accumulates
   const currentArray = useMemo(() => {
@@ -53,7 +55,7 @@ export const SortingTrayScene = ({
     return set;
   }, [actions]);
 
-  // Pointer labels map: boxId -> label
+  // Pointer labels map: boxId -> label (from setPointer actions)
   const pointers = useMemo(() => {
     const map = new Map<string, string>();
     for (const action of actions) {
@@ -66,6 +68,14 @@ export const SortingTrayScene = ({
     }
     return map;
   }, [actions]);
+
+  // Derive current loop index pointer from state (e.g. state.j)
+  const statePointerIndex = useMemo(() => {
+    if (state == null) return undefined;
+    const j = state["j"];
+    if (j == null) return undefined;
+    return Number(j);
+  }, [state]);
 
   const boxWidth = sceneTokens.geometry.box.width;
   const boxHeight = sceneTokens.geometry.box.height;
@@ -153,6 +163,7 @@ export const SortingTrayScene = ({
             </text>
 
             {/* Pointer below box if set */}
+            {/* Pointer below box if set (from setPointer actions) */}
             {pointerLabel && (
               <g>
                 <text
@@ -165,6 +176,23 @@ export const SortingTrayScene = ({
                   fontWeight={600}
                 >
                   ↑ {pointerLabel}
+                </text>
+              </g>
+            )}
+
+            {/* State-derived pointer: show "↑ j" at the current loop index */}
+            {statePointerIndex !== undefined && index === statePointerIndex && (
+              <g>
+                <text
+                  x={boxWidth / 2}
+                  y={boxY + boxHeight + 20}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill={sceneTokens.status.mutated.glow}
+                  fontSize={sceneTokens.typography.caption.fontSize}
+                  fontWeight={600}
+                >
+                  ↑ j
                 </text>
               </g>
             )}

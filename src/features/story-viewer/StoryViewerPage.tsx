@@ -348,24 +348,25 @@ export function StoryViewerPage({
             }}
           >
             {isSupported ? (
-              <SceneRenderer
-                kind={
-                  story?.kind as
-                    | "sorting-tray"
-                    | "storage-shelf"
-                    | "family-tree"
-                    | "decision-gate"
-                    | "linked-chain"
-                    | "workbench"
-                    | "city-map"
-                    | "conveyor-loop"
-                    | "recursion-stairs"
-                    | "delivery-desk"
-                    | "workshop"
-                }
-                initialData={story?.initialData ?? {}}
-                actions={actions}
-              />
+<SceneRenderer
+              kind={
+                story?.kind as
+                  | "sorting-tray"
+                  | "storage-shelf"
+                  | "family-tree"
+                  | "decision-gate"
+                  | "linked-chain"
+                  | "workbench"
+                  | "city-map"
+                  | "conveyor-loop"
+                  | "recursion-stairs"
+                  | "delivery-desk"
+                  | "workshop"
+              }
+              initialData={story?.initialData ?? {}}
+              actions={actions}
+              state={step?.state}
+            />
             ) : (
               <div style={{ textAlign: "center", color: sceneTokens.text.muted }}>
                 <p style={{ fontWeight: 700 }}>Story kind: {story?.kind}</p>

@@ -100,7 +100,7 @@ export const sceneTokens = {
     body: { fontSize: 14, lineHeight: 22, fontWeight: 400, letterSpacing: "0em" },
     code: { fontSize: 13, lineHeight: 20, fontWeight: 500, letterSpacing: "0em" },
     caption: { fontSize: 12, lineHeight: 16, fontWeight: 500, letterSpacing: "+0.01em" },
-    eyebrow: { fontSize: 11, lineHeight: 14, fontWeight: 700, letterSpacing: "+0.12em" },
+    eyebrow: { fontSize: 12, lineHeight: 14, fontWeight: 700, letterSpacing: "+0.12em" },
   },
 
   fontSizes: {
@@ -115,7 +115,7 @@ export const sceneTokens = {
   spacing: {
     1: 4,
     2: 8,
-    3: 12,
+    3: 14,
     4: 16,
     5: 20,
     6: 24,
@@ -123,7 +123,7 @@ export const sceneTokens = {
     padding: 16,
     gap: 16,
     boxWidth: 68,
-    boxHeight: 42,
+    boxHeight: 48,
   },
 
   // SVG Geometry Tokens

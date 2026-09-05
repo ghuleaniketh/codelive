@@ -15,6 +15,7 @@ export const SceneRenderer = ({
   kind,
   initialData,
   actions,
+  state,
 }: {
   kind:
     | "sorting-tray"
@@ -30,11 +31,18 @@ export const SceneRenderer = ({
     | "workshop";
   initialData: unknown;
   actions: SceneAction[];
+  state?: Record<string, string | number | boolean>;
 }) => {
   switch (kind) {
     case "sorting-tray": {
       const data = initialData as { array: Array<{ id: string; value: number }> };
-      return <SortingTrayScene initialArray={data.array} actions={actions} />;
+      return (
+        <SortingTrayScene
+          initialArray={data.array}
+          actions={actions}
+          state={state}
+        />
+      );
     }
     case "storage-shelf": {
       const data = initialData as {
