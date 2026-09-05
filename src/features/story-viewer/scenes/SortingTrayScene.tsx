@@ -17,27 +17,34 @@ export const SortingTrayScene = ({
     const arr = initialArray.map((item) => ({ ...item }));
     for (const action of actions) {
       if (action.component === "Box" && action.action === "swap") {
-        const { box1Id, box2Id } = action.params as { box1Id: string; box2Id: string };
-        const idx1 = arr.findIndex((a) => a.id === String(box1Id));
-        const idx2 = arr.findIndex((a) => a.id === String(box2Id));
-        if (idx1 >= 0 && idx2 >= 0) {
-          const temp = arr[idx1];
-          arr[idx1] = arr[idx2];
-          arr[idx2] = temp;
+        const { indexA, indexB } = action.params as {
+          indexA: number;
+          indexB: number;
+        };
+        if (
+          indexA >= 0 && indexA < arr.length &&
+          indexB >= 0 && indexB < arr.length
+        ) {
+          const temp = arr[indexA];
+          arr[indexA] = arr[indexB];
+          arr[indexB] = temp;
         }
       }
     }
     return arr;
   }, [initialArray, actions]);
 
-  // Identify active comparison IDs (highlights both box1Id and box2Id)
-  const comparedIds = useMemo(() => {
-    const set = new Set<string>();
+  // Identify active comparison indices (highlights both indexA and indexB)
+  const comparedIndices = useMemo(() => {
+    const set = new Set<number>();
     for (const action of actions) {
       if (action.component === "Box" && action.action === "compare") {
-        const { box1Id, box2Id } = action.params as { box1Id: string; box2Id: string };
-        if (box1Id != null) set.add(String(box1Id));
-        if (box2Id != null) set.add(String(box2Id));
+        const { indexA, indexB } = action.params as {
+          indexA: number;
+          indexB: number;
+        };
+        if (indexA != null) set.add(indexA);
+        if (indexB != null) set.add(indexB);
       }
     }
     return set;
@@ -77,14 +84,17 @@ export const SortingTrayScene = ({
     return Number(j);
   }, [state]);
 
-  const boxWidth = sceneTokens.geometry.box.width;
-  const boxHeight = sceneTokens.geometry.box.height;
-  const gap = sceneTokens.spacing[3];
+  const boxWidth = 60;
+  const boxHeight = 40;
+  const gap = 12;
   const stride = boxWidth + gap;
-  const marginX = sceneTokens.spacing[5];
-  const boxY = 28;
-  const width = Math.max(currentArray.length * stride + marginX * 2, 340);
-  const height = 110;
+  const marginX = 16;
+  const boxY = 26;
+  const width = Math.max(currentArray.length * stride + marginX * 2, 320);
+  const height = 100;
+  const valueFontSize = 14;
+  const indexFontSize = 11;
+  const pointerFontSize = 11;
 
   return (
     <svg
@@ -96,7 +106,7 @@ export const SortingTrayScene = ({
     >
       {currentArray.map((item, index) => {
         const targetX = marginX + index * stride;
-        const isCompared = comparedIds.has(item.id);
+        const isCompared = comparedIndices.has(index);
         const isHighlighted = highlightedIds.has(item.id);
         const pointerLabel = pointers.get(item.id);
 
@@ -143,7 +153,7 @@ export const SortingTrayScene = ({
               textAnchor="middle"
               dominantBaseline="middle"
               fill={isCompared || isHighlighted ? sceneTokens.status.active.glow : sceneTokens.text.primary}
-              fontSize={sceneTokens.typography.code.fontSize}
+              fontSize={valueFontSize}
               fontWeight={600}
             >
               {item.value}
@@ -152,11 +162,11 @@ export const SortingTrayScene = ({
             {/* Index label above box */}
             <text
               x={boxWidth / 2}
-              y={boxY - 10}
+              y={boxY - 9}
               textAnchor="middle"
               dominantBaseline="middle"
               fill={sceneTokens.text.muted}
-              fontSize={sceneTokens.typography.eyebrow.fontSize}
+              fontSize={indexFontSize}
               fontWeight={sceneTokens.typography.eyebrow.fontWeight}
             >
               [{index}]
@@ -168,11 +178,11 @@ export const SortingTrayScene = ({
               <g>
                 <text
                   x={boxWidth / 2}
-                  y={boxY + boxHeight + 20}
+                  y={boxY + boxHeight + 18}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill={sceneTokens.status.mutated.glow}
-                  fontSize={sceneTokens.typography.caption.fontSize}
+                  fontSize={pointerFontSize}
                   fontWeight={600}
                 >
                   ↑ {pointerLabel}
@@ -185,11 +195,11 @@ export const SortingTrayScene = ({
               <g>
                 <text
                   x={boxWidth / 2}
-                  y={boxY + boxHeight + 20}
+                  y={boxY + boxHeight + 18}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill={sceneTokens.status.mutated.glow}
-                  fontSize={sceneTokens.typography.caption.fontSize}
+                  fontSize={pointerFontSize}
                   fontWeight={600}
                 >
                   ↑ j
