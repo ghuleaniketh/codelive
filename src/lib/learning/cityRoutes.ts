@@ -1,4 +1,12 @@
-import type { RealWorldStory } from "@shared/types/learning/realWorldStory";
+export type RealWorldStory = {
+  kind: string;
+  icon: string;
+  title: string;
+  plainEnglish: string;
+  whatChanged: string;
+  analogy: string;
+  objectLabel: string;
+};
 
 export type CityRouteAlgorithm = "bfs" | "dfs" | "dijkstra";
 

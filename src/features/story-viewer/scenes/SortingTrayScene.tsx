@@ -17,38 +17,53 @@ export const SortingTrayScene = ({
     const arr = initialArray.map((item) => ({ ...item }));
     for (const action of actions) {
       if (action.component === "Box" && action.action === "swap") {
-        const { indexA, indexB } = action.params as {
-          indexA: number;
-          indexB: number;
-        };
+        const p = action.params as Record<string, unknown> | undefined;
+        let idxA = p?.indexA as number | undefined;
+        let idxB = p?.indexB as number | undefined;
+
+        if (idxA == null && p?.box1Id != null) {
+          const found = arr.findIndex((b) => b.id === String(p.box1Id));
+          if (found !== -1) idxA = found;
+        }
+        if (idxB == null && p?.box2Id != null) {
+          const found = arr.findIndex((b) => b.id === String(p.box2Id));
+          if (found !== -1) idxB = found;
+        }
+
         if (
-          indexA >= 0 && indexA < arr.length &&
-          indexB >= 0 && indexB < arr.length
+          idxA != null && idxB != null &&
+          idxA >= 0 && idxA < arr.length &&
+          idxB >= 0 && idxB < arr.length
         ) {
-          const temp = arr[indexA];
-          arr[indexA] = arr[indexB];
-          arr[indexB] = temp;
+          const temp = arr[idxA];
+          arr[idxA] = arr[idxB];
+          arr[idxB] = temp;
         }
       }
     }
     return arr;
   }, [initialArray, actions]);
 
-  // Identify active comparison indices (highlights both indexA and indexB)
+  // Identify active comparison indices (highlights both indexA and indexB or box1Id and box2Id)
   const comparedIndices = useMemo(() => {
     const set = new Set<number>();
     for (const action of actions) {
       if (action.component === "Box" && action.action === "compare") {
-        const { indexA, indexB } = action.params as {
-          indexA: number;
-          indexB: number;
-        };
-        if (indexA != null) set.add(indexA);
-        if (indexB != null) set.add(indexB);
+        const p = action.params as Record<string, unknown> | undefined;
+        if (p?.indexA != null) set.add(Number(p.indexA));
+        if (p?.indexB != null) set.add(Number(p.indexB));
+        if (p?.box1Id != null) {
+          const idx = currentArray.findIndex((b) => b.id === String(p.box1Id));
+          if (idx !== -1) set.add(idx);
+        }
+        if (p?.box2Id != null) {
+          const idx = currentArray.findIndex((b) => b.id === String(p.box2Id));
+          if (idx !== -1) set.add(idx);
+        }
       }
     }
     return set;
-  }, [actions]);
+  }, [actions, currentArray]);
 
   // Identify general highlight IDs
   const highlightedIds = useMemo(() => {

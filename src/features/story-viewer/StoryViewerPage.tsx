@@ -3,11 +3,10 @@ import { SceneRenderer } from "./scenes/SceneRenderer";
 import { SceneAction } from "./scenes/types";
 import { sceneTokens } from "./scenes/sceneTokens";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pause, Play } from "lucide-react";
+import { ArrowLeft, ExternalLink, Pause, Play } from "lucide-react";
 import { CodePanel } from "./CodePanel";
 import { PlaybackControls } from "@/features/story-viewer/PlaybackControls";
 import { StatePanel } from "@/features/story-viewer/StatePanel";
-import { ProblemPanel } from "@/features/story-viewer/ProblemPanel";
 import { useStoryPlayback } from "./useStoryPlayback";
 import { getStoryShortcutAction } from "@/lib/learning/storyControls";
 import type { Story, ProblemMeta } from "./types";
@@ -40,6 +39,10 @@ export function StoryViewerPage({
   const steps = story?.steps ?? [];
   const total = steps.length;
   const effectiveProblemMeta = problemMeta ?? story?.problemMeta;
+  const problemTitle =
+    effectiveProblemMeta?.title ||
+    (questionText ? questionText.slice(0, 60) : "") ||
+    (story?.kind ? story.kind.replace(/-/g, " ").toUpperCase() : "ALGORITHM VISUALIZER");
 
   const {
     currentStepIndex,
@@ -105,25 +108,27 @@ export function StoryViewerPage({
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
+        maxHeight: "100vh",
         backgroundColor: sceneTokens.surfaces.canvas,
         color: sceneTokens.text.primary,
-        padding: sceneTokens.spacing[5],
+        padding: `${sceneTokens.spacing[3]}px ${sceneTokens.spacing[4]}px`,
         display: "flex",
         flexDirection: "column",
-        gap: sceneTokens.spacing[4],
-        alignItems: "center",
+        gap: sceneTokens.spacing[3],
+        boxSizing: "border-box",
+        overflow: "hidden",
       }}
     >
       {/* Top Header Bar */}
       <header
         style={{
           width: "100%",
-          maxWidth: 1200,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: sceneTokens.spacing[3],
+          flexShrink: 0,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: sceneTokens.spacing[3] }}>
@@ -137,12 +142,13 @@ export function StoryViewerPage({
               borderRadius: sceneTokens.radii.md,
               border: `1px solid ${sceneTokens.borders.subtle}`,
               background: sceneTokens.surfaces.panel,
+              height: 32,
             }}
           >
             <ArrowLeft className="mr-1.5 h-4 w-4" /> New problem
           </Button>
 
-          <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span
               style={{
                 fontSize: sceneTokens.typography.eyebrow.fontSize,
@@ -154,16 +160,18 @@ export function StoryViewerPage({
             >
               Story Viewer
             </span>
-            <h1
+            <span style={{ color: sceneTokens.borders.contrast, fontSize: 12 }}>/</span>
+            <span
               style={{
-                fontSize: sceneTokens.typography.title.fontSize,
-                fontWeight: sceneTokens.typography.title.fontWeight,
-                margin: 0,
-                color: sceneTokens.text.primary,
+                fontSize: sceneTokens.typography.caption.fontSize,
+                fontWeight: 600,
+                color: sceneTokens.text.secondary,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
               }}
             >
               {story?.kind || "Algorithm Visualizer"}
-            </h1>
+            </span>
           </div>
         </div>
 
@@ -173,7 +181,7 @@ export function StoryViewerPage({
             display: "flex",
             alignItems: "center",
             gap: 6,
-            padding: "3px 10px",
+            padding: "3px 12px",
             borderRadius: sceneTokens.radii.full,
             backgroundColor: isPlaying ? sceneTokens.status.active.fill : sceneTokens.surfaces.panel,
             border: `1px solid ${isPlaying ? sceneTokens.status.active.stroke : sceneTokens.borders.subtle}`,
@@ -196,28 +204,26 @@ export function StoryViewerPage({
         </div>
       </header>
 
-      {/* Header Area Problem Panel + Collapsible Summary */}
-      <div style={{ width: "100%", maxWidth: 1200 }}>
-        <ProblemPanel problemMeta={effectiveProblemMeta} questionText={questionText} />
-      </div>
-
-      {/* Main Ergonomic Workbench Split Layout */}
-      <div
+      {/* Main Workspace Split Layout: Fullscreen Proportions (Left ~30%, Right ~70%) */}
+      <main
         style={{
           width: "100%",
-          maxWidth: 1200,
+          flex: 1,
+          minHeight: 0,
           display: "flex",
-          flexWrap: "wrap",
-          gap: sceneTokens.spacing[5],
-          alignItems: "flex-start",
+          gap: sceneTokens.spacing[3],
+          alignItems: "stretch",
         }}
       >
-        {/* Left Column (38% width): CodePanel docked directly above StatePanel */}
+        {/* Left Column (~30% width, ~90% height of viewport): Code & Variable State */}
         <div
           style={{
-            flex: "0 0 38%",
-            minWidth: 320,
+            width: "30%",
+            flex: "0 0 30%",
+            minWidth: 300,
             maxWidth: 480,
+            height: "100%",
+            minHeight: 0,
             display: "flex",
             flexDirection: "column",
             gap: sceneTokens.spacing[3],
@@ -228,171 +234,360 @@ export function StoryViewerPage({
             language={storyLanguage ?? "python"}
             highlightedLines={currentCodeLines ?? []}
           />
-          <StatePanel state={step?.state} />
+          {step?.state && (
+            <div style={{ flexShrink: 0, maxHeight: 180, overflowY: "auto" }}>
+              <StatePanel state={step.state} />
+            </div>
+          )}
         </div>
 
-        {/* Right Column (58% width): StorySlide -> SceneRenderer -> PlaybackControls */}
+        {/* Right Column (~70% width): Scene (top ~70%) + Explanation & Playback (bottom ~30%) */}
         <div
           style={{
-            flex: "1 1 56%",
-            minWidth: 340,
+            flex: "1 1 70%",
+            minWidth: 420,
+            height: "100%",
+            minHeight: 0,
             display: "flex",
             flexDirection: "column",
             gap: sceneTokens.spacing[3],
           }}
         >
-          {/* StorySlide Narrative Card */}
-          {step && (
-            <section
-              style={{
-                width: "100%",
-                borderRadius: sceneTokens.radii.lg,
-                border: `1px solid ${sceneTokens.borders.subtle}`,
-                background: sceneTokens.surfaces.panel,
-                padding: `${sceneTokens.spacing[3]}px ${sceneTokens.spacing[4]}px`,
-                display: "flex",
-                flexDirection: "column",
-                gap: sceneTokens.spacing[2],
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: sceneTokens.spacing[2] }}>
-                <span
-                  style={{
-                    fontSize: sceneTokens.typography.eyebrow.fontSize,
-                    fontWeight: sceneTokens.typography.eyebrow.fontWeight,
-                    letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
-                    textTransform: "uppercase",
-                    color: sceneTokens.text.muted,
-                  }}
-                >
-                  Step {currentStepIndex + 1} of {total}
-                </span>
-
-                {step.stepType === "intro" && (
-                  <span
-                    style={{
-                      fontSize: sceneTokens.typography.eyebrow.fontSize,
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                      padding: "2px 8px",
-                      borderRadius: sceneTokens.radii.full,
-                      backgroundColor: sceneTokens.status.mutated.fill,
-                      color: sceneTokens.status.mutated.glow,
-                      border: `1px solid ${sceneTokens.status.mutated.stroke}`,
-                    }}
-                  >
-                    GOAL
-                  </span>
-                )}
-
-                {step.stepType === "summary" && (
-                  <span
-                    style={{
-                      fontSize: sceneTokens.typography.eyebrow.fontSize,
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                      padding: "2px 8px",
-                      borderRadius: sceneTokens.radii.full,
-                      backgroundColor: sceneTokens.status.active.fill,
-                      color: sceneTokens.status.active.glow,
-                      border: `1px solid ${sceneTokens.status.active.stroke}`,
-                    }}
-                  >
-                    SUMMARY
-                  </span>
-                )}
-              </div>
-
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: sceneTokens.typography.narrative.fontSize,
-                  lineHeight: `${sceneTokens.typography.narrative.lineHeight}px`,
-                  fontWeight: sceneTokens.typography.narrative.fontWeight,
-                  color: sceneTokens.text.primary,
-                }}
-              >
-                {step.text}
-              </h2>
-
-              {step.narrationText && (
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: sceneTokens.typography.body.fontSize,
-                    lineHeight: `${sceneTokens.typography.body.lineHeight}px`,
-                    color: sceneTokens.text.secondary,
-                  }}
-                >
-                  {step.narrationText}
-                </p>
-              )}
-            </section>
-          )}
-
-          {/* Visual Scene Stage Canvas */}
+          {/* Visual Scene Stage Canvas (Top ~68% height) */}
           <div
             style={{
-              width: "100%",
+              flex: "0 0 68%",
+              minHeight: 340,
               backgroundColor: sceneTokens.surfaces.panel,
               border: `1px solid ${sceneTokens.borders.subtle}`,
               borderRadius: sceneTokens.radii.lg,
-              padding: sceneTokens.spacing[4],
+              position: "relative",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: 260,
-              overflowX: "auto",
+              flexDirection: "column",
+              overflow: "hidden",
             }}
           >
-            {isSupported ? (
-<SceneRenderer
-              kind={
-                story?.kind as
-                  | "sorting-tray"
-                  | "storage-shelf"
-                  | "family-tree"
-                  | "decision-gate"
-                  | "linked-chain"
-                  | "workbench"
-                  | "city-map"
-                  | "conveyor-loop"
-                  | "recursion-stairs"
-                  | "delivery-desk"
-                  | "workshop"
-              }
-              initialData={story?.initialData ?? {}}
-              actions={actions}
-              state={step?.state}
-            />
-            ) : (
-              <div style={{ textAlign: "center", color: sceneTokens.text.muted }}>
-                <p style={{ fontWeight: 700 }}>Story kind: {story?.kind}</p>
-                <p style={{ marginTop: 8, fontSize: sceneTokens.typography.caption.fontSize }}>
-                  This story kind isn't visualized yet.
-                </p>
+            {/* Top-Right Badge: Problem Title replacing the kind badge */}
+            <div
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 14,
+                zIndex: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                maxWidth: "70%",
+              }}
+            >
+              {effectiveProblemMeta?.difficultyGuess && (
+                <span
+                  style={{
+                    fontSize: sceneTokens.typography.caption.fontSize,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: sceneTokens.radii.full,
+                    backgroundColor:
+                      effectiveProblemMeta.difficultyGuess === "Easy"
+                        ? sceneTokens.status.success.fill
+                        : effectiveProblemMeta.difficultyGuess === "Medium"
+                        ? sceneTokens.status.active.fill
+                        : sceneTokens.status.error.fill,
+                    color:
+                      effectiveProblemMeta.difficultyGuess === "Easy"
+                        ? sceneTokens.status.success.glow
+                        : effectiveProblemMeta.difficultyGuess === "Medium"
+                        ? sceneTokens.status.active.glow
+                        : sceneTokens.status.error.glow,
+                    border: `1px solid ${
+                      effectiveProblemMeta.difficultyGuess === "Easy"
+                        ? sceneTokens.status.success.stroke
+                        : effectiveProblemMeta.difficultyGuess === "Medium"
+                        ? sceneTokens.status.active.stroke
+                        : sceneTokens.status.error.stroke
+                    }`,
+                  }}
+                >
+                  {effectiveProblemMeta.difficultyGuess}
+                </span>
+              )}
+
+              <div
+                style={{
+                  padding: "4px 12px",
+                  borderRadius: sceneTokens.radii.full,
+                  background: sceneTokens.surfaces.canvas,
+                  border: `1px solid ${sceneTokens.borders.contrast}`,
+                  color: sceneTokens.text.primary,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: "0.02em",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                }}
+                title={problemTitle}
+              >
+                {problemTitle}
               </div>
-            )}
+
+              {effectiveProblemMeta?.sourceLink && (
+                <a
+                  href={effectiveProblemMeta.sourceLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 24,
+                    height: 24,
+                    borderRadius: sceneTokens.radii.full,
+                    background: sceneTokens.surfaces.canvas,
+                    border: `1px solid ${sceneTokens.borders.subtle}`,
+                    color: sceneTokens.status.mutated.glow,
+                    textDecoration: "none",
+                  }}
+                  title="Open original problem source"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+
+            {/* Centered Scene Stage Content */}
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "auto",
+                padding: sceneTokens.spacing[4],
+              }}
+            >
+              {isSupported ? (
+                <SceneRenderer
+                  kind={
+                    story?.kind as
+                      | "sorting-tray"
+                      | "storage-shelf"
+                      | "family-tree"
+                      | "decision-gate"
+                      | "linked-chain"
+                      | "workbench"
+                      | "city-map"
+                      | "conveyor-loop"
+                      | "recursion-stairs"
+                      | "delivery-desk"
+                      | "workshop"
+                  }
+                  initialData={story?.initialData ?? {}}
+                  actions={actions}
+                  state={step?.state}
+                />
+              ) : (
+                <div style={{ textAlign: "center", color: sceneTokens.text.muted }}>
+                  <p style={{ fontWeight: 700 }}>Story kind: {story?.kind}</p>
+                  <p style={{ marginTop: 8, fontSize: sceneTokens.typography.caption.fontSize }}>
+                    This story kind isn't visualized yet.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Playback Controls anchored directly beneath scene */}
-          <PlaybackControls
-            currentStepIndex={currentStepIndex}
-            totalSteps={total}
-            isPlaying={isPlaying}
-            onTogglePlay={togglePlay}
-            onPrev={goPrev}
-            onNext={goNext}
-            onRestart={restart}
-            steps={steps}
-            onStepChange={goToStep}
-            speed={playbackSpeed}
-            setSpeed={setSpeed}
-          />
+          {/* Bottom Area (Remaining ~30% height): Explanation + Waveform + Playback Controls */}
+          <div
+            style={{
+              flex: "1 1 30%",
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: sceneTokens.spacing[2],
+              justifyContent: "space-between",
+            }}
+          >
+            {/* StorySlide Narrative & Explanation Card + Sarvam Voice Waveform Slot */}
+            {step && (
+              <section
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  borderRadius: sceneTokens.radii.lg,
+                  border: `1px solid ${sceneTokens.borders.subtle}`,
+                  background: sceneTokens.surfaces.panel,
+                  padding: `${sceneTokens.spacing[2]}px ${sceneTokens.spacing[4]}px`,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  gap: 4,
+                  overflowY: "auto",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: sceneTokens.spacing[2] }}>
+                    <span
+                      style={{
+                        fontSize: sceneTokens.typography.eyebrow.fontSize,
+                        fontWeight: sceneTokens.typography.eyebrow.fontWeight,
+                        letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
+                        textTransform: "uppercase",
+                        color: sceneTokens.text.muted,
+                      }}
+                    >
+                      Step {currentStepIndex + 1} of {total}
+                    </span>
+
+                    {step.stepType === "intro" && (
+                      <span
+                        style={{
+                          fontSize: sceneTokens.typography.eyebrow.fontSize,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.1em",
+                          padding: "1px 8px",
+                          borderRadius: sceneTokens.radii.full,
+                          backgroundColor: sceneTokens.status.mutated.fill,
+                          color: sceneTokens.status.mutated.glow,
+                          border: `1px solid ${sceneTokens.status.mutated.stroke}`,
+                        }}
+                      >
+                        GOAL
+                      </span>
+                    )}
+
+                    {step.stepType === "summary" && (
+                      <span
+                        style={{
+                          fontSize: sceneTokens.typography.eyebrow.fontSize,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.1em",
+                          padding: "1px 8px",
+                          borderRadius: sceneTokens.radii.full,
+                          backgroundColor: sceneTokens.status.active.fill,
+                          color: sceneTokens.status.active.glow,
+                          border: `1px solid ${sceneTokens.status.active.stroke}`,
+                        }}
+                      >
+                        SUMMARY
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Reserved space for Sarvam Voice Animation / Audio Waveform */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "2px 10px",
+                      borderRadius: sceneTokens.radii.full,
+                      background: sceneTokens.surfaces.canvas,
+                      border: `1px solid ${sceneTokens.borders.subtle}`,
+                      fontSize: 11,
+                      color: sceneTokens.text.muted,
+                      fontWeight: 500,
+                    }}
+                    title="Sarvam AI Audio Narration"
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        backgroundColor: isPlaying ? sceneTokens.status.active.glow : sceneTokens.borders.contrast,
+                        display: "inline-block",
+                      }}
+                    />
+                    <span>Voice Narration</span>
+                    {/* Futuristic audio waveform bars placeholder */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 2, height: 12 }}>
+                      <span
+                        style={{
+                          width: 2,
+                          height: isPlaying ? 10 : 4,
+                          backgroundColor: sceneTokens.status.active.glow,
+                          borderRadius: 1,
+                        }}
+                      />
+                      <span
+                        style={{
+                          width: 2,
+                          height: isPlaying ? 13 : 6,
+                          backgroundColor: sceneTokens.status.active.glow,
+                          borderRadius: 1,
+                        }}
+                      />
+                      <span
+                        style={{
+                          width: 2,
+                          height: isPlaying ? 8 : 4,
+                          backgroundColor: sceneTokens.status.active.glow,
+                          borderRadius: 1,
+                        }}
+                      />
+                      <span
+                        style={{
+                          width: 2,
+                          height: isPlaying ? 11 : 5,
+                          backgroundColor: sceneTokens.status.active.glow,
+                          borderRadius: 1,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: sceneTokens.typography.narrative.fontSize,
+                    lineHeight: `${sceneTokens.typography.narrative.lineHeight}px`,
+                    fontWeight: sceneTokens.typography.narrative.fontWeight,
+                    color: sceneTokens.text.primary,
+                  }}
+                >
+                  {step.text}
+                </h2>
+
+                {step.narrationText && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: sceneTokens.typography.body.fontSize,
+                      lineHeight: `${sceneTokens.typography.body.lineHeight}px`,
+                      color: sceneTokens.text.secondary,
+                    }}
+                  >
+                    {step.narrationText}
+                  </p>
+                )}
+              </section>
+            )}
+
+            {/* Playback Controls anchored directly beneath scene and narrative */}
+            <div style={{ flexShrink: 0 }}>
+              <PlaybackControls
+                currentStepIndex={currentStepIndex}
+                totalSteps={total}
+                isPlaying={isPlaying}
+                onTogglePlay={togglePlay}
+                onPrev={goPrev}
+                onNext={goNext}
+                onRestart={restart}
+                steps={steps}
+                onStepChange={goToStep}
+                speed={playbackSpeed}
+                setSpeed={setSpeed}
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

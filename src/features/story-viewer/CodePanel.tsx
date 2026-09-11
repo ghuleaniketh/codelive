@@ -51,6 +51,9 @@ export const CodePanel = ({
     <div
       style={{
         width: "100%",
+        height: "100%",
+        flex: 1,
+        minHeight: 0,
         display: "flex",
         flexDirection: "column",
         borderRadius: sceneTokens.radii.lg,
@@ -69,6 +72,7 @@ export const CodePanel = ({
           padding: `${sceneTokens.spacing[2]}px ${sceneTokens.spacing[4]}px`,
           borderBottom: `1px solid ${sceneTokens.borders.subtle}`,
           background: sceneTokens.surfaces.canvas,
+          flexShrink: 0,
         }}
       >
         <span
@@ -98,10 +102,11 @@ export const CodePanel = ({
       {/* Code Lines Container */}
       <div
         style={{
+          flex: 1,
+          minHeight: 0,
           overflowX: "auto",
-          padding: `${sceneTokens.spacing[2]}px 0`,
-          maxHeight: "420px",
           overflowY: "auto",
+          padding: `${sceneTokens.spacing[2]}px 0`,
         }}
       >
         {lines.map((line, idx) => {
