@@ -131,7 +131,51 @@ describe("Visual Scenes Component Suite", () => {
     expect(markup).toContain("50");
     expect(markup).toContain("20");
     expect(markup).toContain("80");
-    // Ghost dashed circle should be present
+    // Ghost dashed circle and solid background mask should be present
+    expect(markup).toContain('stroke-dasharray="4 4"');
+    expect(markup).toContain(`fill="${sceneTokens.surfaces.panel}"`);
+  });
+
+  it("FamilyTreeScene compareCandidate in 6-node tree renders solid background mask preventing connector line overlap", () => {
+    // 6-node BST: 50 -> (30, 70), 30 -> (20, 40), 70 -> (80)
+    const initialNodes = [
+      { id: "n50", value: 50, x: 0, y: 0 },
+      { id: "n30", value: 30, x: 0, y: 0 },
+      { id: "n70", value: 70, x: 0, y: 0 },
+      { id: "n20", value: 20, x: 0, y: 0 },
+      { id: "n40", value: 40, x: 0, y: 0 },
+      { id: "n80", value: 80, x: 0, y: 0 },
+    ];
+    const initialEdges = [
+      { from: "n50", to: "n30", side: "left" as const },
+      { from: "n50", to: "n70", side: "right" as const },
+      { from: "n30", to: "n20", side: "left" as const },
+      { from: "n30", to: "n40", side: "right" as const },
+      { from: "n70", to: "n80", side: "right" as const },
+    ];
+    // Candidate comparison on n20 (which is near parent n30 and sibling n40 connector lines)
+    const actions = [
+      {
+        component: "TreeNode" as const,
+        action: "compareCandidate" as const,
+        params: { nodeId: "n20", candidateValue: 25 },
+      },
+    ];
+
+    const markup = renderToStaticMarkup(
+      <FamilyTreeScene initialNodes={initialNodes} initialEdges={initialEdges} actions={actions} />
+    );
+
+    // All node values rendered
+    expect(markup).toContain("50");
+    expect(markup).toContain("30");
+    expect(markup).toContain("20");
+    expect(markup).toContain("40");
+    expect(markup).toContain("70");
+    expect(markup).toContain("80");
+    // Candidate 25 rendered with solid panel mask behind it to occlude any crossing lines
+    expect(markup).toContain("25");
+    expect(markup).toContain(`fill="${sceneTokens.surfaces.panel}"`);
     expect(markup).toContain('stroke-dasharray="4 4"');
   });
 });

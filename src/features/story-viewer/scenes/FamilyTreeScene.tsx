@@ -259,8 +259,8 @@ export const FamilyTreeScene = ({
           const node = nodes.find((n) => n.id === existingId);
           const base = node && pos[node.id] ? pos[node.id] : { x: width / 2, y: 54 };
           
-          const rawGhostX = base.x + 40;
-          const rawGhostY = base.y - 28;
+          const rawGhostX = base.x + 44;
+          const rawGhostY = base.y - 30;
 
           // Ensure ghost node never clips against top, bottom, or sides
           const safeMinY = nodeRadius + 6;
@@ -271,7 +271,7 @@ export const FamilyTreeScene = ({
           const ghostY = Math.max(safeMinY, Math.min(safeMaxY, rawGhostY));
           let ghostX = rawGhostX;
           if (ghostX > safeMaxX) {
-            ghostX = Math.max(safeMinX, base.x - 40);
+            ghostX = Math.max(safeMinX, base.x - 44);
           }
           return (
             <g key={`candidate-${i}-${existingId}-${candidateValue}`}>
@@ -286,6 +286,7 @@ export const FamilyTreeScene = ({
                   transition={{ duration: sceneTokens.motion.step }}
                 />
               )}
+              {/* Connector line between compared node and ghost node */}
               <motion.line
                 x1={base.x}
                 y1={base.y}
@@ -298,11 +299,19 @@ export const FamilyTreeScene = ({
                 animate={{ opacity: 0.8 }}
                 transition={{ duration: sceneTokens.motion.step }}
               />
+              {/* Solid background mask circle: occludes any tree edge lines passing behind */}
+              <circle
+                cx={ghostX}
+                cy={ghostY}
+                r={nodeRadius}
+                fill={sceneTokens.surfaces.panel}
+              />
+              {/* Active tinted overlay and dashed candidate circle */}
               <motion.circle
                 cx={ghostX}
                 cy={ghostY}
                 r={nodeRadius}
-                fill="transparent"
+                fill={sceneTokens.status.active.fill}
                 stroke={sceneTokens.status.active.stroke}
                 strokeWidth={sceneTokens.geometry.stroke.default}
                 strokeDasharray="4 4"
