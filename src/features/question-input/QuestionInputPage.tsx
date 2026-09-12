@@ -3,7 +3,7 @@ import { useSolveQuestion } from "./useSolveQuestion";
 import { StoryViewerPage } from "../story-viewer/StoryViewerPage";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { sceneTokens } from "../story-viewer/scenes/sceneTokens";
 import type { Story } from "../story-viewer/types";
 
@@ -112,46 +112,30 @@ export function QuestionInputPage() {
         }}
       >
         {/* Header Branding */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: sceneTokens.radii.md,
-                background: "rgba(245, 158, 11, 0.15)",
-                border: `1px solid ${sceneTokens.status.active.stroke}`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Sparkles className="h-5 w-5" style={{ color: sceneTokens.status.active.glow }} aria-hidden="true" />
-            </div>
-            <div>
-              <h1
-                style={{
-                  fontSize: 22,
-                  fontWeight: 700,
-                  letterSpacing: "-0.01em",
-                  color: sceneTokens.text.primary,
-                  margin: 0,
-                }}
-              >
-                Code Story Studio
-              </h1>
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: sceneTokens.text.muted,
-                  letterSpacing: "0.02em",
-                }}
-              >
-                Interactive Algorithmic Visualizer
-              </span>
-            </div>
-          </div>
+        <div>
+          <h1
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              letterSpacing: "-0.01em",
+              color: sceneTokens.text.primary,
+              margin: 0,
+            }}
+          >
+            Code Story Studio
+          </h1>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 500,
+              color: sceneTokens.text.muted,
+              letterSpacing: "0.02em",
+              display: "block",
+              marginTop: 2,
+            }}
+          >
+            Interactive Algorithmic Visualizer
+          </span>
         </div>
 
         {/* Minimal Transparent Input Field */}
@@ -282,10 +266,7 @@ export function QuestionInputPage() {
                 <Loader2 className="h-4 w-4 animate-spin" /> Solving…
               </>
             ) : (
-              <>
-                <span>Visualize</span>
-                <ArrowRight className="h-4 w-4" />
-              </>
+              <span>Visualize</span>
             )}
           </Button>
         </div>
