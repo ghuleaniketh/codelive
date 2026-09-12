@@ -73,6 +73,19 @@ export function StoryViewerPage({
     return list;
   }, [steps, currentStepIndex]);
 
+  // Cumulative state: merge variable states from step 0 up to currentStepIndex
+  // so variables defined in earlier steps (e.g. i=0 in outer loop) persist when inner loop variables (e.g. j=1) change!
+  const currentState = useMemo(() => {
+    const merged: Record<string, string | number | boolean> = {};
+    for (let i = 0; i <= currentStepIndex && i < steps.length; i++) {
+      const s = steps[i];
+      if (s?.state) {
+        Object.assign(merged, s.state);
+      }
+    }
+    return Object.keys(merged).length > 0 ? merged : undefined;
+  }, [steps, currentStepIndex]);
+
   const isSupported = SUPPORTED_KINDS.has(story?.kind);
 
   // Derive code/language from the story
@@ -234,9 +247,9 @@ export function StoryViewerPage({
             language={storyLanguage ?? "python"}
             highlightedLines={currentCodeLines ?? []}
           />
-          {step?.state && (
+          {currentState && (
             <div style={{ flexShrink: 0, maxHeight: 180, overflowY: "auto" }}>
-              <StatePanel state={step.state} />
+              <StatePanel state={currentState} />
             </div>
           )}
         </div>
@@ -386,7 +399,7 @@ export function StoryViewerPage({
                   }
                   initialData={story?.initialData ?? {}}
                   actions={actions}
-                  state={step?.state}
+                  state={currentState}
                 />
               ) : (
                 <div style={{ textAlign: "center", color: sceneTokens.text.muted }}>

@@ -30,6 +30,35 @@ describe("Visual Scenes Component Suite", () => {
     expect(markup).toContain("3");
   });
 
+  it("SortingTrayScene displays both i and j pointers and handles shared indices (e.g. i, j)", () => {
+    const initialArray = [
+      { id: "b0", value: 5 },
+      { id: "b1", value: 3 },
+      { id: "b2", value: 8 },
+    ];
+
+    // Case 1: i and j at separate indices (i=0, j=1)
+    const markup1 = renderToStaticMarkup(
+      <SortingTrayScene
+        initialArray={initialArray}
+        actions={[]}
+        state={{ i: 0, j: 1, swapped: false }}
+      />
+    );
+    expect(markup1).toContain("↑ i");
+    expect(markup1).toContain("↑ j");
+
+    // Case 2: i and j at the same index (i=0, j=0)
+    const markup2 = renderToStaticMarkup(
+      <SortingTrayScene
+        initialArray={initialArray}
+        actions={[]}
+        state={{ i: 0, j: 0, swapped: true }}
+      />
+    );
+    expect(markup2).toContain("↑ i, j");
+  });
+
   it("WorkbenchScene places text at true geometric center (width / 2 = 110)", () => {
     const markup = renderToStaticMarkup(
       <WorkbenchScene

@@ -77,27 +77,67 @@ export const SortingTrayScene = ({
     return set;
   }, [actions]);
 
-  // Pointer labels map: boxId -> label (from setPointer actions)
-  const pointers = useMemo(() => {
-    const map = new Map<string, string>();
+  // Map index -> array of pointer labels (combining setPointer actions and state variables like i, j, etc.)
+  const pointersByIndex = useMemo(() => {
+    const map = new Map<number, string[]>();
+
+    const addPointer = (idx: number, label: string) => {
+      if (idx >= 0 && idx < currentArray.length) {
+        const list = map.get(idx) || [];
+        if (!list.includes(label)) {
+          list.push(label);
+        }
+        map.set(idx, list);
+      }
+    };
+
+    // 1. Explicit setPointer actions
     for (const action of actions) {
       if (action.component === "Box" && action.action === "setPointer") {
-        const { boxId, label } = action.params as { boxId: string; label: string };
-        if (boxId != null && label != null) {
-          map.set(String(boxId), String(label));
+        const p = action.params as Record<string, unknown> | undefined;
+        const label = p?.label ? String(p.label) : p?.name ? String(p.name) : undefined;
+        let targetIndex: number | undefined;
+        if (p?.index != null && typeof p.index === "number") {
+          targetIndex = p.index;
+        } else if (p?.boxId != null) {
+          const found = currentArray.findIndex((b) => b.id === String(p.boxId));
+          if (found !== -1) targetIndex = found;
+        }
+        if (targetIndex != null && label) {
+          addPointer(targetIndex, label);
         }
       }
     }
-    return map;
-  }, [actions]);
 
-  // Derive current loop index pointer from state (e.g. state.j)
-  const statePointerIndex = useMemo(() => {
-    if (state == null) return undefined;
-    const j = state["j"];
-    if (j == null) return undefined;
-    return Number(j);
-  }, [state]);
+    // 2. Variable state pointers (e.g. i, j, k, left, right, mid, min_idx, etc.)
+    if (state) {
+      const priorityOrder = ["i", "j", "k", "ptr", "left", "right", "mid", "low", "high", "min_idx", "key"];
+      const keys = Object.keys(state).sort((a, b) => {
+        const idxA = priorityOrder.indexOf(a);
+        const idxB = priorityOrder.indexOf(b);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return a.localeCompare(b);
+      });
+
+      for (const key of keys) {
+        const val = state[key];
+        if (typeof val === "number" && Number.isInteger(val)) {
+          if (val >= 0 && val < currentArray.length) {
+            addPointer(val, key);
+          }
+        } else if (typeof val === "string" && /^\d+$/.test(val)) {
+          const num = Number(val);
+          if (num >= 0 && num < currentArray.length) {
+            addPointer(num, key);
+          }
+        }
+      }
+    }
+
+    return map;
+  }, [actions, state, currentArray]);
 
   const boxWidth = 60;
   const boxHeight = 40;
@@ -106,7 +146,7 @@ export const SortingTrayScene = ({
   const marginX = 16;
   const boxY = 26;
   const width = Math.max(currentArray.length * stride + marginX * 2, 320);
-  const height = 100;
+  const height = 108;
   const valueFontSize = 14;
   const indexFontSize = 11;
   const pointerFontSize = 11;
@@ -123,7 +163,8 @@ export const SortingTrayScene = ({
         const targetX = marginX + index * stride;
         const isCompared = comparedIndices.has(index);
         const isHighlighted = highlightedIds.has(item.id);
-        const pointerLabel = pointers.get(item.id);
+        const slotPointers = pointersByIndex.get(index) || [];
+        const pointerText = slotPointers.length > 0 ? `↑ ${slotPointers.join(", ")}` : null;
 
         const fill = isCompared || isHighlighted
           ? sceneTokens.status.active.fill
@@ -187,9 +228,8 @@ export const SortingTrayScene = ({
               [{index}]
             </text>
 
-            {/* Pointer below box if set */}
-            {/* Pointer below box if set (from setPointer actions) */}
-            {pointerLabel && (
+            {/* Pointer(s) below box (from actions or state i, j, etc.) */}
+            {pointerText && (
               <g>
                 <text
                   x={boxWidth / 2}
@@ -200,24 +240,7 @@ export const SortingTrayScene = ({
                   fontSize={pointerFontSize}
                   fontWeight={600}
                 >
-                  ↑ {pointerLabel}
-                </text>
-              </g>
-            )}
-
-            {/* State-derived pointer: show "↑ j" at the current loop index */}
-            {statePointerIndex !== undefined && index === statePointerIndex && (
-              <g>
-                <text
-                  x={boxWidth / 2}
-                  y={boxY + boxHeight + 18}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fill={sceneTokens.status.mutated.glow}
-                  fontSize={pointerFontSize}
-                  fontWeight={600}
-                >
-                  ↑ j
+                  {pointerText}
                 </text>
               </g>
             )}
