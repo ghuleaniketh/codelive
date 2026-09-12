@@ -109,28 +109,30 @@ export const SortingTrayScene = ({
       }
     }
 
-    // 2. Variable state pointers (e.g. i, j, k, left, right, mid, min_idx, etc.)
+    // 2. State-derived pointers
     if (state) {
-      const priorityOrder = ["i", "j", "k", "ptr", "left", "right", "mid", "low", "high", "min_idx", "key"];
-      const keys = Object.keys(state).sort((a, b) => {
-        const idxA = priorityOrder.indexOf(a);
-        const idxB = priorityOrder.indexOf(b);
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA !== -1) return -1;
-        if (idxB !== -1) return 1;
-        return a.localeCompare(b);
-      });
+      // Pointers that represent direct element cursors in array visualizers.
+      // In algorithms with both 'i' and 'j' (like Bubble Sort), 'j' is the active scanning pointer on the array,
+      // while 'i' is the outer loop / pass counter tracked in the Variable State panel.
+      const directPointerKeys = ["j", "ptr", "curr", "k", "min_idx", "pivot", "left", "right", "mid", "low", "high"];
+      
+      // If 'j' is NOT present but 'i' is the sole scanning pointer (e.g. linear search 'for i in range(len(arr))'),
+      // then 'i' acts as the array cursor.
+      const shouldIncludeI = !("j" in state) && ("i" in state);
+      const activeKeys = shouldIncludeI ? ["i", ...directPointerKeys] : directPointerKeys;
 
-      for (const key of keys) {
-        const val = state[key];
-        if (typeof val === "number" && Number.isInteger(val)) {
-          if (val >= 0 && val < currentArray.length) {
-            addPointer(val, key);
-          }
-        } else if (typeof val === "string" && /^\d+$/.test(val)) {
-          const num = Number(val);
-          if (num >= 0 && num < currentArray.length) {
-            addPointer(num, key);
+      for (const key of activeKeys) {
+        if (key in state) {
+          const val = state[key];
+          if (typeof val === "number" && Number.isInteger(val)) {
+            if (val >= 0 && val < currentArray.length) {
+              addPointer(val, key);
+            }
+          } else if (typeof val === "string" && /^\d+$/.test(val)) {
+            const num = Number(val);
+            if (num >= 0 && num < currentArray.length) {
+              addPointer(num, key);
+            }
           }
         }
       }

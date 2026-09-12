@@ -30,14 +30,14 @@ describe("Visual Scenes Component Suite", () => {
     expect(markup).toContain("3");
   });
 
-  it("SortingTrayScene displays both i and j pointers and handles shared indices (e.g. i, j)", () => {
+  it("SortingTrayScene displays scanning pointers (j) and handles sole i pointers", () => {
     const initialArray = [
       { id: "b0", value: 5 },
       { id: "b1", value: 3 },
       { id: "b2", value: 8 },
     ];
 
-    // Case 1: i and j at separate indices (i=0, j=1)
+    // Case 1: In Bubble Sort with i and j in state, j is the scanning cursor on the array
     const markup1 = renderToStaticMarkup(
       <SortingTrayScene
         initialArray={initialArray}
@@ -45,18 +45,28 @@ describe("Visual Scenes Component Suite", () => {
         state={{ i: 0, j: 1, swapped: false }}
       />
     );
-    expect(markup1).toContain("↑ i");
     expect(markup1).toContain("↑ j");
 
-    // Case 2: i and j at the same index (i=0, j=0)
+    // Case 2: In linear search where i is the sole pointer, i is rendered on the array
     const markup2 = renderToStaticMarkup(
       <SortingTrayScene
         initialArray={initialArray}
         actions={[]}
-        state={{ i: 0, j: 0, swapped: true }}
+        state={{ i: 2, target: 8 }}
       />
     );
-    expect(markup2).toContain("↑ i, j");
+    expect(markup2).toContain("↑ i");
+
+    // Case 3: Explicit setPointer actions always render
+    const markup3 = renderToStaticMarkup(
+      <SortingTrayScene
+        initialArray={initialArray}
+        actions={[
+          { component: "Box" as const, action: "setPointer" as const, params: { index: 0, label: "curr" } },
+        ]}
+      />
+    );
+    expect(markup3).toContain("↑ curr");
   });
 
   it("WorkbenchScene places text at true geometric center (width / 2 = 110)", () => {
