@@ -4,6 +4,7 @@ import { SortingTrayScene } from "./SortingTrayScene";
 import { WorkbenchScene } from "./WorkbenchScene";
 import { WorkshopScene } from "./WorkshopScene";
 import { DecisionGateScene } from "./DecisionGateScene";
+import { FamilyTreeScene } from "./FamilyTreeScene";
 import { SceneRenderer } from "./SceneRenderer";
 import { sceneTokens } from "./sceneTokens";
 
@@ -100,5 +101,37 @@ describe("Visual Scenes Component Suite", () => {
       );
       expect(markup).toContain("<svg");
     }
+  });
+
+  it("FamilyTreeScene compareCandidate at root level renders fully within SVG bounds without clipping", () => {
+    const initialNodes = [
+      { id: "root", value: 50, x: 0, y: 0 },
+      { id: "left", value: 20, x: 0, y: 0 },
+      { id: "right", value: 80, x: 0, y: 0 },
+    ];
+    const initialEdges = [
+      { from: "root", to: "left", side: "left" as const },
+      { from: "root", to: "right", side: "right" as const },
+    ];
+    const actions = [
+      {
+        component: "TreeNode" as const,
+        action: "compareCandidate" as const,
+        params: { nodeId: "root", candidateValue: 30 },
+      },
+    ];
+
+    const markup = renderToStaticMarkup(
+      <FamilyTreeScene initialNodes={initialNodes} initialEdges={initialEdges} actions={actions} />
+    );
+
+    // Should render candidate 30
+    expect(markup).toContain("30");
+    // Should render root and child nodes
+    expect(markup).toContain("50");
+    expect(markup).toContain("20");
+    expect(markup).toContain("80");
+    // Ghost dashed circle should be present
+    expect(markup).toContain('stroke-dasharray="4 4"');
   });
 });

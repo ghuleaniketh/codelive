@@ -40,16 +40,17 @@ function computeTreeLayout(
 
   const xSpacing = 72;
   const ySpacing = 72;
-  const marginX = 36;
-  const marginY = 36;
+  const marginX = 44;
+  const marginTop = 54;
+  const marginBottom = 40;
   const pos: Record<string, { x: number; y: number }> = {};
   order.forEach((id, i) => {
-    pos[id] = { x: marginX + i * xSpacing, y: marginY + depth[id] * ySpacing };
+    pos[id] = { x: marginX + i * xSpacing, y: marginTop + depth[id] * ySpacing };
   });
 
   const maxDepth = order.reduce((m, id) => Math.max(m, depth[id] ?? 0), 0);
-  const width = Math.max(marginX * 2 + (order.length - 1) * xSpacing, 120);
-  const height = Math.max(marginY * 2 + maxDepth * ySpacing, 140);
+  const width = Math.max(marginX * 2 + (order.length - 1) * xSpacing + 40, 240);
+  const height = Math.max(marginTop + marginBottom + maxDepth * ySpacing, 160);
   return { pos, width, height };
 }
 
@@ -256,9 +257,22 @@ export const FamilyTreeScene = ({
           const candidateValue = params.candidateValue ?? params.value;
           if (candidateValue === undefined) return null;
           const node = nodes.find((n) => n.id === existingId);
-          const base = node ? pos[node.id] : { x: width / 2, y: height / 2 };
-          const ghostX = base.x + 44;
-          const ghostY = base.y - 32;
+          const base = node && pos[node.id] ? pos[node.id] : { x: width / 2, y: 54 };
+          
+          const rawGhostX = base.x + 40;
+          const rawGhostY = base.y - 28;
+
+          // Ensure ghost node never clips against top, bottom, or sides
+          const safeMinY = nodeRadius + 6;
+          const safeMaxY = height - (nodeRadius + 6);
+          const safeMinX = nodeRadius + 6;
+          const safeMaxX = width - (nodeRadius + 6);
+
+          const ghostY = Math.max(safeMinY, Math.min(safeMaxY, rawGhostY));
+          let ghostX = rawGhostX;
+          if (ghostX > safeMaxX) {
+            ghostX = Math.max(safeMinX, base.x - 40);
+          }
           return (
             <g key={`candidate-${i}-${existingId}-${candidateValue}`}>
               {node && (
