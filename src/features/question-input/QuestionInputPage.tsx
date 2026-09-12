@@ -3,14 +3,9 @@ import { useSolveQuestion } from "./useSolveQuestion";
 import { StoryViewerPage } from "../story-viewer/StoryViewerPage";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 import { sceneTokens } from "../story-viewer/scenes/sceneTokens";
 import type { Story } from "../story-viewer/types";
-
-const EXAMPLE_PROMPTS = [
-  "Sort an array of integers in ascending order using bubble sort.",
-  "Insert the values [50, 30, 70, 20, 40, 60, 80] into a binary search tree.",
-];
 
 export function QuestionInputPage() {
   const [questionText, setQuestionText] = useState("");
@@ -27,7 +22,8 @@ export function QuestionInputPage() {
         onSuccess: (data) => {
           setStory(data as unknown as Story);
         },
-        onError: (err: { message?: string }) => setErrorMsg(err?.message || "Failed to solve problem."),
+        onError: (err: { message?: string }) =>
+          setErrorMsg(err?.message || "Failed to solve problem."),
       }
     );
   };
@@ -49,113 +45,160 @@ export function QuestionInputPage() {
   return (
     <div
       style={{
+        position: "relative",
         minHeight: "100vh",
-        backgroundColor: sceneTokens.surfaces.canvas,
-        color: sceneTokens.text.primary,
+        width: "100%",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: sceneTokens.spacing[6],
-        gap: sceneTokens.spacing[5],
+        padding: "24px",
+        overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 640 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: sceneTokens.spacing[2], marginBottom: sceneTokens.spacing[2] }}>
-          <Sparkles className="h-6 w-6" style={{ color: sceneTokens.status.active.glow }} aria-hidden="true" />
-          <h1
-            style={{
-              fontSize: sceneTokens.typography.display.fontSize,
-              lineHeight: `${sceneTokens.typography.display.lineHeight}px`,
-              fontWeight: sceneTokens.typography.display.fontWeight,
-              letterSpacing: sceneTokens.typography.display.letterSpacing,
-              margin: 0,
-            }}
-          >
-            Solve a DSA problem
-          </h1>
-        </div>
-        <p
-          style={{
-            fontSize: sceneTokens.typography.body.fontSize,
-            lineHeight: `${sceneTokens.typography.body.lineHeight}px`,
-            color: sceneTokens.text.secondary,
-            marginBottom: sceneTokens.spacing[4],
-            marginTop: 0,
-          }}
-        >
-          Paste a problem statement. We generate code, run it, and build a step-by-step
-          visual story you can walk through. This takes several seconds.
-        </p>
+      {/* Background Live Wallpaper Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          objectFit: "cover",
+          zIndex: 0,
+          pointerEvents: "none",
+        }}
+      >
+        <source src="/background.mp4" type="video/mp4" />
+      </video>
 
-        <label
-          htmlFor="question-text"
-          style={{
-            display: "block",
-            fontSize: sceneTokens.typography.eyebrow.fontSize,
-            fontWeight: sceneTokens.typography.eyebrow.fontWeight,
-            letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
-            textTransform: "uppercase",
-            color: sceneTokens.text.secondary,
-            marginBottom: sceneTokens.spacing[2],
-          }}
-        >
-          Problem statement
-        </label>
-        <Textarea
-          id="question-text"
-          value={questionText}
-          onChange={(e) => {
-            setQuestionText(e.target.value);
-            if (errorMsg) setErrorMsg(null);
-          }}
-          placeholder="e.g. Sort an array of integers in ascending order…"
-          rows={8}
-          className="focus-visible:ring-1 focus-visible:ring-[#38bdf8] focus-visible:border-[#38bdf8] transition-all"
-          style={{
-            background: sceneTokens.surfaces.panel,
-            borderColor: sceneTokens.borders.contrast,
-            color: sceneTokens.text.primary,
-            fontSize: sceneTokens.typography.body.fontSize,
-            lineHeight: 1.6,
-            borderRadius: sceneTokens.radii.md,
-          }}
-        />
+      {/* Subtle Atmospheric Dark Tint Overlay */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(9, 13, 22, 0.45)",
+          backdropFilter: "blur(4px)",
+          zIndex: 1,
+          pointerEvents: "none",
+        }}
+      />
 
-        <div style={{ marginTop: sceneTokens.spacing[3], display: "flex", flexWrap: "wrap", gap: sceneTokens.spacing[2] }}>
-          {EXAMPLE_PROMPTS.map((prompt) => (
-            <button
-              key={prompt}
-              type="button"
-              onClick={() => setQuestionText(prompt)}
-              className="hover:border-[#38bdf8] hover:text-[#f8fafc] hover:bg-[#162238] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8]"
+      {/* Floating Minimal Glassmorphic Card */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 2,
+          width: "100%",
+          maxWidth: 680,
+          background: "rgba(15, 23, 42, 0.65)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          borderRadius: sceneTokens.radii.xl,
+          padding: "36px 40px",
+          boxShadow: "0 24px 60px rgba(0, 0, 0, 0.55)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+        }}
+      >
+        {/* Header Branding */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
               style={{
-                fontSize: sceneTokens.typography.caption.fontSize,
-                padding: `${sceneTokens.spacing[1]}px ${sceneTokens.spacing[3]}px`,
-                borderRadius: sceneTokens.radii.full,
-                border: `1px solid ${sceneTokens.borders.contrast}`,
-                background: sceneTokens.surfaces.panel,
-                color: sceneTokens.text.secondary,
-                cursor: "pointer",
-                transition: `all ${sceneTokens.motion.micro}s ease`,
+                width: 36,
+                height: 36,
+                borderRadius: sceneTokens.radii.md,
+                background: "rgba(245, 158, 11, 0.15)",
+                border: `1px solid ${sceneTokens.status.active.stroke}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              Use example: {prompt.length > 38 ? prompt.slice(0, 38) + "…" : prompt}
-            </button>
-          ))}
+              <Sparkles className="h-5 w-5" style={{ color: sceneTokens.status.active.glow }} aria-hidden="true" />
+            </div>
+            <div>
+              <h1
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  letterSpacing: "-0.01em",
+                  color: sceneTokens.text.primary,
+                  margin: 0,
+                }}
+              >
+                Code Story Studio
+              </h1>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: sceneTokens.text.muted,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                Interactive Algorithmic Visualizer
+              </span>
+            </div>
+          </div>
         </div>
 
+        {/* Minimal Transparent Input Field */}
+        <div style={{ position: "relative", display: "flex", flexDirection: "column" }}>
+          <Textarea
+            id="question-text"
+            value={questionText}
+            onChange={(e) => {
+              setQuestionText(e.target.value);
+              if (errorMsg) setErrorMsg(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
+            placeholder="Describe any algorithm or paste a DSA problem statement…"
+            rows={5}
+            className="focus-visible:ring-1 focus-visible:ring-[#38bdf8] focus-visible:border-[#38bdf8] transition-all"
+            style={{
+              background: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              color: sceneTokens.text.primary,
+              fontSize: 15,
+              lineHeight: 1.6,
+              borderRadius: sceneTokens.radii.lg,
+              padding: "16px 18px",
+              resize: "none",
+              outline: "none",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+            }}
+          />
+        </div>
+
+        {/* Error Alert */}
         {errorMsg && (
           <div
             role="alert"
             style={{
-              marginTop: sceneTokens.spacing[4],
-              padding: sceneTokens.spacing[3],
+              padding: "12px 16px",
               borderRadius: sceneTokens.radii.md,
               border: `1px solid ${sceneTokens.status.error.stroke}`,
               background: sceneTokens.status.error.fill,
               color: sceneTokens.status.error.glow,
-              fontSize: sceneTokens.typography.code.fontSize,
+              fontSize: sceneTokens.typography.caption.fontSize,
               whiteSpace: "pre-wrap",
             }}
           >
@@ -167,35 +210,34 @@ export function QuestionInputPage() {
         {isLoading && (
           <div
             style={{
-              marginTop: sceneTokens.spacing[4],
-              padding: `${sceneTokens.spacing[4]}px`,
+              padding: "16px 20px",
               borderRadius: sceneTokens.radii.lg,
               border: `1px solid ${sceneTokens.borders.subtle}`,
-              background: sceneTokens.surfaces.panel,
+              background: "rgba(15, 23, 42, 0.8)",
               display: "flex",
               flexDirection: "column",
               gap: sceneTokens.spacing[2],
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: sceneTokens.spacing[3] }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Loader2 className="h-5 w-5 animate-spin" style={{ color: sceneTokens.status.mutated.glow }} />
               <div>
-                <p style={{ margin: 0, fontSize: sceneTokens.typography.narrative.fontSize, fontWeight: 700, color: sceneTokens.text.primary }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: sceneTokens.text.primary }}>
                   Constructing your Code Story…
                 </p>
-                <p style={{ margin: 0, fontSize: sceneTokens.typography.caption.fontSize, color: sceneTokens.text.secondary }}>
-                  Synthesizing algorithm logic, variable traces, and scene step actions.
+                <p style={{ margin: 0, fontSize: 12, color: sceneTokens.text.secondary }}>
+                  Synthesizing algorithm logic, variable traces, and visual steps.
                 </p>
               </div>
             </div>
             <div
               style={{
                 width: "100%",
-                height: 4,
-                backgroundColor: sceneTokens.surfaces.card,
+                height: 3,
+                backgroundColor: "rgba(255, 255, 255, 0.08)",
                 borderRadius: sceneTokens.radii.full,
                 overflow: "hidden",
-                marginTop: sceneTokens.spacing[1],
+                marginTop: 4,
               }}
             >
               <div
@@ -210,30 +252,43 @@ export function QuestionInputPage() {
           </div>
         )}
 
-        <Button
-          onClick={handleSubmit}
-          disabled={!questionText.trim() || isLoading}
-          className="hover:opacity-90 active:scale-[0.99] transition-all focus-visible:ring-2 focus-visible:ring-[#38bdf8]"
-          style={{
-            marginTop: sceneTokens.spacing[4],
-            width: "100%",
-            height: 44,
-            borderRadius: sceneTokens.radii.md,
-            backgroundColor: sceneTokens.status.active.stroke,
-            color: "#090d16",
-            fontWeight: 700,
-          }}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Solving problem…
-            </>
-          ) : (
-            <>
-              <Sparkles className="mr-2 h-4 w-4" /> Solve
-            </>
-          )}
-        </Button>
+        {/* Submit Action Button */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+          <span style={{ fontSize: 12, color: sceneTokens.text.muted }}>
+            Tip: Press <kbd style={{ padding: "2px 6px", borderRadius: 4, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", fontSize: 11 }}>Ctrl</kbd> + <kbd style={{ padding: "2px 6px", borderRadius: 4, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", fontSize: 11 }}>Enter</kbd> to solve
+          </span>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={!questionText.trim() || isLoading}
+            className="hover:opacity-90 active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-[#38bdf8]"
+            style={{
+              height: 42,
+              padding: "0 24px",
+              borderRadius: sceneTokens.radii.full,
+              backgroundColor: sceneTokens.status.active.stroke,
+              color: "#090d16",
+              fontWeight: 700,
+              fontSize: 14,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              boxShadow: "0 4px 16px rgba(245, 158, 11, 0.3)",
+              cursor: !questionText.trim() || isLoading ? "not-allowed" : "pointer",
+            }}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Solving…
+              </>
+            ) : (
+              <>
+                <span>Visualize</span>
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
