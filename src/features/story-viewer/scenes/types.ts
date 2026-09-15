@@ -95,8 +95,8 @@ export interface StorageShelfInitialData {
 }
 
 export interface FamilyTreeInitialData {
-  nodes: Array<{ id: string; value: number; x: number; y: number }>;
-  edges: Array<{ from: string; to: string }>;
+  nodes: Array<{ id: string; value: number; x: number; y: number; treeId?: string }>;
+  edges: Array<{ from: string; to: string; side?: "left" | "right"; treeId?: string }>;
 }
 
 export interface DecisionGateInitialData {

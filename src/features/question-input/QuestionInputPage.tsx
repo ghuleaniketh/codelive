@@ -3,52 +3,52 @@ import { useSolveQuestion } from "./useSolveQuestion";
 import { StoryViewerPage } from "../story-viewer/StoryViewerPage";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { motion, AnimatePresence } from "framer-motion";
-import { sceneTokens } from "../story-viewer/scenes/sceneTokens";
+import {
+  ProgrammingLanguageSelector,
+  SarvamVoiceLanguageSelector,
+} from "@/components/LanguageSelectors";
+import type { ProgrammingLanguage } from "@/lib/languageOptions";
 import type { Story } from "../story-viewer/types";
 
 interface PipelineStage {
   id: string;
   label: string;
-  title: string;
-  detail: string;
+  terminalLog: string;
 }
 
 const PIPELINE_STAGES: PipelineStage[] = [
   {
     id: "plan",
     label: "Plan",
-    title: "Analyzing & Planning Approaches",
-    detail: "Evaluating candidate algorithms, Big-O time/space complexities, and selecting the optimal strategy...",
+    terminalLog: "> analyzing algorithmic constraints & planning approach…",
   },
   {
     id: "generate",
     label: "Generate",
-    title: "Synthesizing Solution Code",
-    detail: "Writing clean, optimal algorithm code and test cases tailored for step-by-step visualization...",
+    terminalLog: "> synthesizing optimal solution code…",
   },
   {
     id: "execute",
     label: "Execute",
-    title: "Running Sandbox Execution",
-    detail: "Executing code in isolated environment to capture stdout, variable states, and memory transitions...",
+    terminalLog: "> executing in sandbox runtime & recording trace…",
   },
   {
     id: "story",
-    label: "Create Story",
-    title: "Generating Visual Story Scenes",
-    detail: "Synthesizing interactive scene actions, pointer movements, step narrations, and state animations...",
+    label: "Create story",
+    terminalLog: "> generating interactive scene actions & narration…",
   },
   {
     id: "finalize",
     label: "Finalize",
-    title: "Assembling Visual Studio",
-    detail: "Synchronizing code lines with playback timeline and preparing your interactive story...",
+    terminalLog: "> synchronizing timeline & assembling visual studio…",
   },
 ];
 
 export function QuestionInputPage() {
   const [questionText, setQuestionText] = useState("");
+  const [preferredLanguage, setPreferredLanguage] =
+    useState<ProgrammingLanguage>("python");
+  const [sarvamLanguage, setSarvamLanguage] = useState<string>("en-IN");
   const [story, setStory] = useState<Story | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeStageIdx, setActiveStageIdx] = useState(0);
@@ -88,7 +88,7 @@ export function QuestionInputPage() {
     setErrorMsg(null);
     setActiveStageIdx(0);
     solve(
-      { questionText },
+      { questionText, preferredLanguage, explanationLanguage: sarvamLanguage },
       {
         onSuccess: (data) => {
           setStory(data as unknown as Story);
@@ -104,6 +104,7 @@ export function QuestionInputPage() {
       <StoryViewerPage
         story={story}
         questionText={questionText}
+        initialAudioLanguage={sarvamLanguage}
         onBack={() => {
           setStory(null);
           setErrorMsg(null);
@@ -127,110 +128,86 @@ export function QuestionInputPage() {
         width: "100%",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
-        padding: "24px",
-        overflow: "hidden",
+        padding: "32px 24px",
+        backgroundColor: "transparent",
+        color: "#EDEEF0",
         boxSizing: "border-box",
       }}
     >
-      {/* Background Live Wallpaper Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          objectFit: "cover",
-          zIndex: 0,
-          pointerEvents: "none",
-        }}
-      >
-        <source src="/background.mp4" type="video/mp4" />
-      </video>
-
-      {/* Subtle Atmospheric Dark Tint Overlay */}
+      {/* Main Terminal-Style Container (Left-Aligned / Structured) */}
       <div
         style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          backgroundColor: "rgba(9, 13, 22, 0.45)",
-          backdropFilter: "blur(4px)",
-          zIndex: 1,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Floating Minimal Glassmorphic Card Container */}
-      <motion.div
-        layout
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        style={{
           position: "relative",
-          zIndex: 2,
+          zIndex: 1,
           width: "100%",
           maxWidth: 680,
-          background: "rgba(15, 23, 42, 0.70)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          borderRadius: sceneTokens.radii.xl,
-          padding: "36px 40px",
-          boxShadow: "0 24px 60px rgba(0, 0, 0, 0.55)",
-          minHeight: 280,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
+          margin: "0 auto",
         }}
       >
-        <AnimatePresence mode="wait">
-          {!isLoading ? (
-            /* Input Form View */
-            <motion.div
-              key="input-form"
-              initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -16, filter: "blur(6px)", transition: { duration: 0.25 } }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+        <div
+          style={{
+            background: "#14171B",
+            border: "1px solid #22262B",
+            borderRadius: 10,
+            padding: "32px",
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+          }}
+        >
+          {/* Header */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  backgroundColor: "#E8A33D",
+                  display: "inline-block",
+                }}
+              />
+              <h1
+                style={{
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: "#EDEEF0",
+                  margin: 0,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Code Story Studio
+              </h1>
+            </div>
+            <p
+              style={{
+                fontSize: 13,
+                color: "#8C93A1",
+                margin: 0,
+              }}
             >
-              {/* Header Branding */}
-              <div>
-                <h1
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    letterSpacing: "-0.01em",
-                    color: sceneTokens.text.primary,
-                    margin: 0,
-                  }}
-                >
-                  Code Story Studio
-                </h1>
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: sceneTokens.text.muted,
-                    letterSpacing: "0.02em",
-                    display: "block",
-                    marginTop: 2,
-                  }}
-                >
-                  Interactive Algorithmic Visualizer
-                </span>
-              </div>
+              Interactive algorithm visualization with step-by-step code and narration.
+            </p>
+          </div>
 
-              {/* Minimal Transparent Input Field */}
-              <div style={{ position: "relative", display: "flex", flexDirection: "column" }}>
+          {!isLoading ? (
+            /* Input Form */
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {/* Problem Prompt Input */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label
+                  htmlFor="question-text"
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "#EDEEF0",
+                  }}
+                >
+                  Algorithm problem statement
+                </label>
                 <Textarea
                   id="question-text"
                   value={questionText}
@@ -244,259 +221,161 @@ export function QuestionInputPage() {
                       handleSubmit();
                     }
                   }}
-                  placeholder="Describe any algorithm or paste a DSA problem statement…"
+                  placeholder="Describe an algorithm or paste a DSA problem (e.g. 'Binary search in sorted array' or 'Invert a binary tree')…"
                   rows={5}
-                  className="focus-visible:ring-1 focus-visible:ring-[#38bdf8] focus-visible:border-[#38bdf8] transition-all"
                   style={{
-                    background: "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    color: sceneTokens.text.primary,
-                    fontSize: 15,
+                    background: "#0B0D10",
+                    border: "1px solid #22262B",
+                    color: "#EDEEF0",
+                    fontSize: 13,
                     lineHeight: 1.6,
-                    borderRadius: sceneTokens.radii.lg,
-                    padding: "16px 18px",
+                    borderRadius: 6,
+                    padding: "12px 14px",
                     minHeight: 120,
-                    maxHeight: 220,
-                    overflowY: "auto",
+                    maxHeight: 240,
                     resize: "none",
                     outline: "none",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
+                    fontFamily: "inherit",
                   }}
                 />
               </div>
 
-              {/* Error Alert */}
+              {/* Selectors Row */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: 16,
+                  alignItems: "end",
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: "#8C93A1",
+                    }}
+                  >
+                    Language
+                  </label>
+                  <ProgrammingLanguageSelector
+                    value={preferredLanguage}
+                    onChange={setPreferredLanguage}
+                    size="default"
+                  />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: "#8C93A1",
+                    }}
+                  >
+                    Narration voice
+                  </label>
+                  <SarvamVoiceLanguageSelector
+                    value={sarvamLanguage}
+                    onChange={setSarvamLanguage}
+                    size="default"
+                  />
+                </div>
+              </div>
+
+              {/* Error Message */}
               {errorMsg && (
                 <div
                   role="alert"
                   style={{
-                    padding: "12px 16px",
-                    borderRadius: sceneTokens.radii.md,
-                    border: `1px solid ${sceneTokens.status.error.stroke}`,
-                    background: sceneTokens.status.error.fill,
-                    color: sceneTokens.status.error.glow,
-                    fontSize: sceneTokens.typography.caption.fontSize,
-                    whiteSpace: "pre-wrap",
+                    padding: "10px 12px",
+                    borderRadius: 6,
+                    border: "1px solid #22262B",
+                    background: "#1B1F24",
+                    color: "#E8A33D",
+                    fontSize: 12,
+                    fontFamily: "IBM Plex Mono, monospace",
                   }}
                 >
                   {errorMsg}
                 </div>
               )}
 
-              {/* Submit Action Button */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
-                <span style={{ fontSize: 12, color: sceneTokens.text.muted }}>
-                  Tip: Press <kbd style={{ padding: "2px 6px", borderRadius: 4, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", fontSize: 11 }}>Ctrl</kbd> + <kbd style={{ padding: "2px 6px", borderRadius: 4, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", fontSize: 11 }}>Enter</kbd> to solve
-                </span>
-
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!questionText.trim() || isLoading}
-                  className="hover:opacity-90 active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-[#38bdf8]"
-                  style={{
-                    height: 42,
-                    padding: "0 24px",
-                    borderRadius: sceneTokens.radii.full,
-                    backgroundColor: sceneTokens.status.active.stroke,
-                    color: "#090d16",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    boxShadow: "0 4px 16px rgba(245, 158, 11, 0.3)",
-                    cursor: !questionText.trim() || isLoading ? "not-allowed" : "pointer",
-                  }}
-                >
-                  <span>Visualize</span>
-                </Button>
-              </div>
-            </motion.div>
-          ) : (
-            /* Centered Real-Time Backend Progress Loader */
-            <motion.div
-              key="loading-state"
-              initial={{ opacity: 0, scale: 0.94, filter: "blur(6px)" }}
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              exit={{ opacity: 0, scale: 0.95, filter: "blur(6px)", transition: { duration: 0.25 } }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                padding: "16px 0",
-                gap: "24px",
-              }}
-            >
-              {/* Centered Glowing Orbital Animation */}
+              {/* Footer Row: Status + Primary CTA */}
               <div
                 style={{
-                  position: "relative",
-                  width: 84,
-                  height: 84,
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "space-between",
+                  paddingTop: 8,
+                  borderTop: "1px solid #22262B",
                 }}
               >
-                {/* Outer Glow Halo */}
-                <motion.div
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.35, 0.65, 0.35],
-                  }}
-                  transition={{
-                    duration: 2.4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  style={{
-                    position: "absolute",
-                    width: 80,
-                    height: 80,
-                    borderRadius: "50%",
-                    background: "radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(245, 158, 11, 0.15) 60%, transparent 75%)",
-                    filter: "blur(10px)",
-                  }}
-                />
-
-                {/* Rotating Dashed Orbit Ring */}
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }}
-                  style={{
-                    position: "absolute",
-                    width: 72,
-                    height: 72,
-                    borderRadius: "50%",
-                    border: "2px dashed rgba(56, 189, 248, 0.6)",
-                    boxSizing: "border-box",
-                  }}
-                />
-
-                {/* Counter-rotating Accent Ring */}
-                <motion.div
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                  style={{
-                    position: "absolute",
-                    width: 54,
-                    height: 54,
-                    borderRadius: "50%",
-                    border: "1.5px solid rgba(245, 158, 11, 0.5)",
-                    borderTopColor: "transparent",
-                    borderBottomColor: "transparent",
-                    boxSizing: "border-box",
-                  }}
-                />
-
-                {/* Pulsing Center Core */}
-                <motion.div
-                  animate={{
-                    scale: [0.85, 1.15, 0.85],
-                    boxShadow: [
-                      "0 0 10px rgba(56, 189, 248, 0.5)",
-                      "0 0 22px rgba(245, 158, 11, 0.8)",
-                      "0 0 10px rgba(56, 189, 248, 0.5)",
-                    ],
-                  }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: "50%",
-                    backgroundColor: sceneTokens.status.active.stroke,
-                  }}
-                />
-              </div>
-
-              {/* Dynamic Stage Text */}
-              <div style={{ maxWidth: 520, display: "flex", flexDirection: "column", gap: "8px" }}>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentStage.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <h2
-                      style={{
-                        margin: 0,
-                        fontSize: 18,
-                        fontWeight: 700,
-                        color: sceneTokens.text.primary,
-                        letterSpacing: "-0.01em",
-                      }}
-                    >
-                      {currentStage.title}
-                    </h2>
-                    <p
-                      style={{
-                        margin: "6px 0 0 0",
-                        fontSize: 13,
-                        lineHeight: 1.5,
-                        color: sceneTokens.text.secondary,
-                      }}
-                    >
-                      {currentStage.detail}
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Shimmering Progress Bar */}
-              <div style={{ width: "100%", maxWidth: 460 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 8,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                    color: sceneTokens.text.muted,
-                  }}
-                >
-                  <span>Step {activeStageIdx + 1} of {PIPELINE_STAGES.length}</span>
-                  <span style={{ color: sceneTokens.status.active.glow }}>{progressPercent}%</span>
-                </div>
-                <div
-                  style={{
-                    width: "100%",
-                    height: 6,
-                    backgroundColor: "rgba(255, 255, 255, 0.08)",
-                    borderRadius: sceneTokens.radii.full,
-                    overflow: "hidden",
-                    position: "relative",
-                  }}
-                >
-                  <motion.div
-                    animate={{ width: `${progressPercent}%` }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
+                {/* AI Sandbox Ready Status */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span
                     style={{
-                      height: "100%",
-                      background: "linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #f59e0b 100%)",
-                      borderRadius: sceneTokens.radii.full,
-                      boxShadow: "0 0 12px rgba(56, 189, 248, 0.6)",
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      backgroundColor: "#5FBF77",
+                      display: "inline-block",
                     }}
                   />
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: "#8C93A1",
+                    }}
+                  >
+                    AI sandbox ready
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: "#8C93A1",
+                      fontFamily: "IBM Plex Mono, monospace",
+                    }}
+                  >
+                    Ctrl + Enter
+                  </span>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!questionText.trim() || isLoading}
+                    style={{
+                      height: 36,
+                      padding: "0 20px",
+                      borderRadius: 6,
+                      backgroundColor: "#E8A33D",
+                      color: "#0B0D10",
+                      fontWeight: 600,
+                      fontSize: 13,
+                      border: "none",
+                      cursor: !questionText.trim() || isLoading ? "not-allowed" : "pointer",
+                      opacity: !questionText.trim() || isLoading ? 0.5 : 1,
+                    }}
+                  >
+                    Visualize
+                  </Button>
                 </div>
               </div>
-
-              {/* Stage Step Timeline Indicators */}
+            </div>
+          ) : (
+            /* Loading / Progress State: Terminal Status Ticker + Minimal Segmented Tracker */
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {/* Segmented Step Tracker with hairline dividers */}
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  flexWrap: "wrap",
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${PIPELINE_STAGES.length}, 1fr)`,
+                  border: "1px solid #22262B",
+                  borderRadius: 6,
+                  overflow: "hidden",
+                  background: "#0B0D10",
                 }}
               >
                 {PIPELINE_STAGES.map((stage, idx) => {
@@ -506,43 +385,111 @@ export function QuestionInputPage() {
                     <div
                       key={stage.id}
                       style={{
+                        padding: "8px 10px",
+                        textAlign: "center",
+                        fontSize: 11,
+                        borderRight:
+                          idx < PIPELINE_STAGES.length - 1
+                            ? "1px solid #22262B"
+                            : "none",
+                        backgroundColor: isCurrent
+                          ? "#1B1F24"
+                          : "transparent",
+                        color: isCurrent
+                          ? "#EDEEF0"
+                          : isDone
+                          ? "#5FA8D3"
+                          : "#8C93A1",
+                        fontWeight: isCurrent ? 600 : 400,
                         display: "flex",
                         alignItems: "center",
-                        gap: 6,
-                        padding: "4px 10px",
-                        borderRadius: sceneTokens.radii.full,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        backgroundColor: isCurrent
-                          ? "rgba(245, 158, 11, 0.15)"
-                          : isDone
-                          ? "rgba(56, 189, 248, 0.12)"
-                          : "rgba(255, 255, 255, 0.03)",
-                        border: `1px solid ${
-                          isCurrent
-                            ? sceneTokens.status.active.stroke
-                            : isDone
-                            ? "rgba(56, 189, 248, 0.4)"
-                            : "rgba(255, 255, 255, 0.06)"
-                        }`,
-                        color: isCurrent
-                          ? sceneTokens.status.active.glow
-                          : isDone
-                          ? "#38bdf8"
-                          : sceneTokens.text.muted,
-                        transition: "all 0.3s ease",
+                        justifyContent: "center",
+                        gap: 4,
                       }}
                     >
-                      <span>{isDone ? "✓" : idx + 1}</span>
+                      <span
+                        style={{
+                          fontFamily: "IBM Plex Mono, monospace",
+                          fontSize: 10,
+                          color: isCurrent
+                            ? "#E8A33D"
+                            : isDone
+                            ? "#5FA8D3"
+                            : "#8C93A1",
+                        }}
+                      >
+                        {isDone ? "✓" : idx + 1}
+                      </span>
                       <span>{stage.label}</span>
                     </div>
                   );
                 })}
               </div>
-            </motion.div>
+
+              {/* Monospace Terminal Status Ticker */}
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 6,
+                  border: "1px solid #22262B",
+                  background: "#0B0D10",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    fontSize: 11,
+                    fontFamily: "IBM Plex Mono, monospace",
+                    color: "#8C93A1",
+                  }}
+                >
+                  <span>
+                    step {activeStageIdx + 1} / {PIPELINE_STAGES.length}
+                  </span>
+                  <span style={{ color: "#E8A33D" }}>{progressPercent}%</span>
+                </div>
+
+                {/* Terminal line */}
+                <div
+                  style={{
+                    fontFamily: "IBM Plex Mono, monospace",
+                    fontSize: 13,
+                    color: "#EDEEF0",
+                    minHeight: 20,
+                  }}
+                >
+                  {currentStage.terminalLog}
+                </div>
+
+                {/* Slim horizontal progress bar in flat accent */}
+                <div
+                  style={{
+                    width: "100%",
+                    height: 2,
+                    backgroundColor: "#22262B",
+                    borderRadius: 6,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${progressPercent}%`,
+                      backgroundColor: "#E8A33D",
+                      transition: "width 0.4s ease",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           )}
-        </AnimatePresence>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

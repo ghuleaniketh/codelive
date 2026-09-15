@@ -1,5 +1,3 @@
-import { sceneTokens } from "./scenes/sceneTokens";
-
 export function StatePanel({
   state,
 }: {
@@ -30,10 +28,11 @@ export function StatePanel({
     <div
       style={{
         width: "100%",
-        background: sceneTokens.surfaces.panel,
-        border: `1px solid ${sceneTokens.borders.subtle}`,
-        borderRadius: sceneTokens.radii.lg,
-        padding: sceneTokens.spacing[3],
+        background: "#14171B",
+        border: "1px solid #22262B",
+        borderRadius: 10,
+        padding: "12px",
+        boxSizing: "border-box",
       }}
     >
       <div
@@ -41,26 +40,25 @@ export function StatePanel({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: sceneTokens.spacing[2],
-          paddingBottom: sceneTokens.spacing[2],
-          borderBottom: `1px solid ${sceneTokens.borders.subtle}`,
+          marginBottom: "8px",
+          paddingBottom: "8px",
+          borderBottom: "1px solid #22262B",
         }}
       >
         <span
           style={{
-            fontSize: sceneTokens.typography.eyebrow.fontSize,
-            fontWeight: sceneTokens.typography.eyebrow.fontWeight,
-            letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
-            textTransform: "uppercase",
-            color: sceneTokens.text.secondary,
+            fontSize: 12,
+            fontWeight: 500,
+            color: "#EDEEF0",
           }}
         >
-          Variable State
+          Variable state
         </span>
         <span
           style={{
-            fontSize: sceneTokens.typography.caption.fontSize,
-            color: sceneTokens.text.muted,
+            fontFamily: "IBM Plex Mono, monospace",
+            fontSize: 11,
+            color: "#8C93A1",
           }}
         >
           {entries.length} tracked
@@ -70,21 +68,19 @@ export function StatePanel({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
-          gap: sceneTokens.spacing[2],
+          gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
+          gap: "6px",
         }}
       >
         {sortedEntries.map(([key, value], idx) => {
           const isBool = typeof value === "boolean";
           const valColor = isBool
             ? value
-              ? sceneTokens.status.success.glow
-              : sceneTokens.text.muted
-            : key === "i"
-            ? "#38bdf8"
-            : key === "j"
-            ? sceneTokens.status.mutated.glow
-            : sceneTokens.status.active.glow;
+              ? "#5FBF77"
+              : "#8C93A1"
+            : key === "i" || key === "j" || key === "ptr"
+            ? "#5FA8D3"
+            : "#EDEEF0";
 
           return (
             <div
@@ -92,28 +88,28 @@ export function StatePanel({
               style={{
                 display: "flex",
                 flexDirection: "column",
-                padding: `${sceneTokens.spacing[1]}px ${sceneTokens.spacing[2]}px`,
-                background: sceneTokens.surfaces.card,
-                borderRadius: sceneTokens.radii.sm,
-                border: `1px solid ${sceneTokens.borders.subtle}`,
+                padding: "4px 8px",
+                background: "#1B1F24",
+                borderRadius: 6,
+                border: "1px solid #22262B",
               }}
             >
               <span
                 style={{
-                  fontFamily: '"JetBrains Mono", "SF Mono", monospace',
-                  fontSize: sceneTokens.typography.caption.fontSize,
-                  color: sceneTokens.text.secondary,
-                  fontWeight: 500,
+                  fontFamily: "IBM Plex Mono, monospace",
+                  fontSize: 11,
+                  color: "#8C93A1",
+                  fontWeight: 400,
                 }}
               >
                 {key}
               </span>
               <span
                 style={{
-                  fontFamily: '"JetBrains Mono", "SF Mono", monospace',
-                  fontSize: sceneTokens.typography.code.fontSize,
+                  fontFamily: "IBM Plex Mono, monospace",
+                  fontSize: 12,
                   color: valColor,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   marginTop: 2,
                 }}
               >

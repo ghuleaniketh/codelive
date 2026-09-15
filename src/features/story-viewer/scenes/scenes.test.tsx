@@ -217,4 +217,75 @@ describe("Visual Scenes Component Suite", () => {
     expect(markup).toContain(`fill="${sceneTokens.surfaces.panel}"`);
     expect(markup).toContain('stroke-dasharray="4 4"');
   });
+
+  it("FamilyTreeScene renders two separate 3-node trees side-by-side with treeId 'p' and 'q' without overflow", () => {
+    // Tree p: 1 -> left: 2, right: 3
+    // Tree q: 1 -> left: 2, right: 3
+    const initialNodes = [
+      { id: "p1", value: 1, x: 0, y: 0, treeId: "p" },
+      { id: "p2", value: 2, x: 0, y: 0, treeId: "p" },
+      { id: "p3", value: 3, x: 0, y: 0, treeId: "p" },
+      { id: "q1", value: 1, x: 0, y: 0, treeId: "q" },
+      { id: "q2", value: 2, x: 0, y: 0, treeId: "q" },
+      { id: "q3", value: 3, x: 0, y: 0, treeId: "q" },
+    ];
+    const initialEdges = [
+      { from: "p1", to: "p2", side: "left" as const, treeId: "p" },
+      { from: "p1", to: "p3", side: "right" as const, treeId: "p" },
+      { from: "q1", to: "q2", side: "left" as const, treeId: "q" },
+      { from: "q1", to: "q3", side: "right" as const, treeId: "q" },
+    ];
+
+    const markup = renderToStaticMarkup(
+      <FamilyTreeScene initialNodes={initialNodes} initialEdges={initialEdges} actions={[]} />
+    );
+
+    // Tree headers should be rendered
+    expect(markup).toContain("Tree p");
+    expect(markup).toContain("Tree q");
+
+    // All node values should be rendered
+    expect(markup).toContain("1");
+    expect(markup).toContain("2");
+    expect(markup).toContain("3");
+
+    // Width should accommodate both side-by-side groups (> 500px)
+    expect(markup).toMatch(/viewBox="0 0 (\d+) (\d+)"/);
+    const match = markup.match(/viewBox="0 0 (\d+) (\d+)"/);
+    expect(match).not.toBeNull();
+    const width = parseInt(match![1], 10);
+    expect(width).toBeGreaterThanOrEqual(500);
+
+    // Check that tree p and tree q nodes have distinct, separated X coordinate regions
+    // p nodes: cx="44", cx="116", cx="188"
+    // q nodes: cx="324", cx="396", cx="468"
+    expect(markup).toContain('cx="44"');
+    expect(markup).toContain('cx="116"');
+    expect(markup).toContain('cx="188"');
+    expect(markup).toContain('cx="324"');
+    expect(markup).toContain('cx="396"');
+    expect(markup).toContain('cx="468"');
+  });
+
+  it("FamilyTreeScene defensively refuses to draw edges between nodes with different treeIds", () => {
+    const initialNodes = [
+      { id: "p1", value: 1, x: 0, y: 0, treeId: "p" },
+      { id: "q1", value: 1, x: 0, y: 0, treeId: "q" },
+    ];
+    // Malformed edge attempting to connect node in tree 'p' to node in tree 'q'
+    const malformedEdges = [
+      { from: "p1", to: "q1", side: "left" as const },
+    ];
+
+    const markup = renderToStaticMarkup(
+      <FamilyTreeScene initialNodes={initialNodes} initialEdges={malformedEdges} actions={[]} />
+    );
+
+    // Node circles should exist
+    expect(markup).toContain("Tree p");
+    expect(markup).toContain("Tree q");
+    // No line element should be drawn for the invalid cross-tree edge
+    expect(markup).not.toContain("<line");
+  });
 });
+

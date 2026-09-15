@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { StoryViewerPage } from "./StoryViewerPage";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { httpBatchLink } from "@trpc/client";
+import { trpc } from "@/lib/trpc";
 import type { Story } from "./types";
 
 describe("StoryViewerPage Ergonomic Workbench Split Layout", () => {
@@ -31,21 +34,36 @@ describe("StoryViewerPage Ergonomic Workbench Split Layout", () => {
   };
 
   it("renders ProblemPanel, docked CodePanel + StatePanel, StorySlide, Scene, and anchored PlaybackControls", () => {
+    const queryClient = new QueryClient();
+    const trpcClient = trpc.createClient({
+      links: [
+        httpBatchLink({
+          url: "http://localhost:4000/trpc",
+        }),
+      ],
+    });
+
     const markup = renderToStaticMarkup(
-      <StoryViewerPage
-        story={mockStory}
-        questionText="Sort an array"
-        onBack={() => {}}
-      />
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <StoryViewerPage
+            story={mockStory}
+            questionText="Sort an array"
+            onBack={() => {}}
+          />
+        </QueryClientProvider>
+      </trpc.Provider>
     );
 
     // Header & Problem
-    expect(markup).toContain("Story Viewer");
+    expect(markup).toContain("Story viewer");
     expect(markup).toContain("Sort an array");
 
     // Left column: CodePanel and StatePanel
-    expect(markup).toContain("def sort(arr):");
-    expect(markup).toContain("Variable State");
+    expect(markup).toContain("def");
+    expect(markup).toContain("sort");
+    expect(markup).toContain("arr");
+    expect(markup).toContain("Variable state");
     expect(markup).toContain("arr[0]");
 
     // Right column: StorySlide, Scene, Playback

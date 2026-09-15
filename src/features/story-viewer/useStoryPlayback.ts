@@ -8,6 +8,7 @@ export interface UseStoryPlaybackOptions {
   initialStep?: number;
   initialSpeed?: number;
   autoPlay?: boolean;
+  enableInternalTimer?: boolean;
 }
 
 export interface UseStoryPlaybackResult {
@@ -27,6 +28,7 @@ export interface UseStoryPlaybackResult {
   restart: () => void;
   goToStep: (index: number) => void;
   setSpeed: (speed: number) => void;
+  advance: () => void;
 }
 
 /**
@@ -46,6 +48,7 @@ export function useStoryPlayback({
   initialStep = 0,
   initialSpeed = 1,
   autoPlay = true,
+  enableInternalTimer = true,
 }: UseStoryPlaybackOptions): UseStoryPlaybackResult {
   const [currentStepIndex, setCurrentStepIndex] = useState(() =>
     Math.max(0, Math.min(initialStep, Math.max(0, totalSteps - 1)))
@@ -68,6 +71,16 @@ export function useStoryPlayback({
   const totalStepsRef = useRef(totalSteps);
   totalStepsRef.current = totalSteps;
 
+  const advance = useCallback(() => {
+    setCurrentStepIndex((prev) => {
+      if (prev >= totalStepsRef.current - 1) {
+        setPlaybackStatus("completed");
+        return totalStepsRef.current - 1;
+      }
+      return prev + 1;
+    });
+  }, []);
+
   // Reset or adjust when totalSteps changes
   useEffect(() => {
     if (totalSteps <= 1) {
@@ -80,24 +93,18 @@ export function useStoryPlayback({
     }
   }, [totalSteps, autoPlay]);
 
-  // Autoplay timer loop
+  // Autoplay timer loop (active only when enableInternalTimer is true)
   useEffect(() => {
+    if (!enableInternalTimer) return;
     if (playbackStatus !== "playing") return;
     if (totalStepsRef.current <= 1) return;
 
     const timer = setInterval(() => {
-      setCurrentStepIndex((prev) => {
-        const next = prev + 1;
-        if (next >= totalStepsRef.current - 1) {
-          setPlaybackStatus("completed");
-          return totalStepsRef.current - 1;
-        }
-        return next;
-      });
+      advance();
     }, stepIntervalMs);
 
     return () => clearInterval(timer);
-  }, [playbackStatus, stepIntervalMs]);
+  }, [enableInternalTimer, playbackStatus, stepIntervalMs, advance]);
 
   // Manual actions: all pause autoplay and set mode to "manual"
   const pause = useCallback(() => {
@@ -182,5 +189,6 @@ export function useStoryPlayback({
     restart,
     goToStep,
     setSpeed,
+    advance,
   };
 }

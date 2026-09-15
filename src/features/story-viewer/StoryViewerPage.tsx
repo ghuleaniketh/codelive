@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SceneRenderer } from "./scenes/SceneRenderer";
 import { SceneAction } from "./scenes/types";
 import { sceneTokens } from "./scenes/sceneTokens";
@@ -8,6 +8,7 @@ import { CodePanel } from "./CodePanel";
 import { PlaybackControls } from "@/features/story-viewer/PlaybackControls";
 import { StatePanel } from "@/features/story-viewer/StatePanel";
 import { useStoryPlayback } from "./useStoryPlayback";
+import { useStepAudio } from "./useStepAudio";
 import { getStoryShortcutAction } from "@/lib/learning/storyControls";
 import type { Story, ProblemMeta } from "./types";
 
@@ -29,11 +30,13 @@ export function StoryViewerPage({
   story,
   problemMeta,
   questionText,
+  initialAudioLanguage = "en-IN",
   onBack,
 }: {
   story: Story;
   problemMeta?: ProblemMeta;
   questionText: string;
+  initialAudioLanguage?: string;
   onBack: () => void;
 }) {
   const steps = story?.steps ?? [];
@@ -44,23 +47,47 @@ export function StoryViewerPage({
     (questionText ? questionText.slice(0, 60) : "") ||
     (story?.kind ? story.kind.replace(/-/g, " ").toUpperCase() : "ALGORITHM VISUALIZER");
 
+  const [audioLanguage, setAudioLanguage] = useState(initialAudioLanguage);
+
   const {
     currentStepIndex,
     playbackStatus,
     playbackSpeed,
     isPlaying,
+    isCompleted,
     togglePlay,
     goPrev,
     goNext,
     restart,
     goToStep,
     setSpeed,
+    advance,
+    stepIntervalMs,
   } = useStoryPlayback({
     totalSteps: total,
     autoPlay: true,
+    enableInternalTimer: false,
   });
 
   const step = steps[currentStepIndex];
+
+  const {
+    isLoading: isAudioLoading,
+    isAudioPlaying,
+    isMuted,
+    isAutoplayBlocked,
+    toggleMute,
+    unblockAudio,
+  } = useStepAudio({
+    narrationText: step?.narrationText,
+    language: audioLanguage,
+    playbackSpeed,
+    isPlaying,
+    isCompleted,
+    currentStepIndex,
+    stepIntervalMs,
+    onAdvance: advance,
+  });
 
   // Cumulative actions: replay steps 0..currentStepIndex so scene state ACCUMULATES
   // and Prev/Next/restart rebuild deterministically.
@@ -121,14 +148,16 @@ export function StoryViewerPage({
   return (
     <div
       style={{
+        position: "relative",
         height: "100vh",
         maxHeight: "100vh",
-        backgroundColor: sceneTokens.surfaces.canvas,
-        color: sceneTokens.text.primary,
-        padding: `${sceneTokens.spacing[3]}px ${sceneTokens.spacing[4]}px`,
+        width: "100%",
+        color: "#EDEEF0",
+        backgroundColor: "transparent",
+        padding: "16px",
         display: "flex",
         flexDirection: "column",
-        gap: sceneTokens.spacing[3],
+        gap: "12px",
         boxSizing: "border-box",
         overflow: "hidden",
       }}
@@ -136,99 +165,143 @@ export function StoryViewerPage({
       {/* Top Header Bar */}
       <header
         style={{
+          position: "relative",
+          zIndex: 1,
           width: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: sceneTokens.spacing[3],
+          gap: 12,
           flexShrink: 0,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: sceneTokens.spacing[3] }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
+            className="hover:bg-[#1B1F24] hover:text-[#EDEEF0] transition-colors"
             style={{
-              color: sceneTokens.text.secondary,
-              fontSize: sceneTokens.typography.caption.fontSize,
-              borderRadius: sceneTokens.radii.md,
-              border: `1px solid ${sceneTokens.borders.subtle}`,
-              background: sceneTokens.surfaces.panel,
+              color: "#8C93A1",
+              fontSize: 12,
+              borderRadius: 6,
+              border: "1px solid #22262B",
+              background: "#14171B",
               height: 32,
             }}
           >
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> New problem
+            <ArrowLeft className="mr-1.5 h-3.5 w-3.5 text-[#8C93A1]" /> New problem
           </Button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "4px 10px",
+              borderRadius: 6,
+              background: "#14171B",
+              border: "1px solid #22262B",
+            }}
+          >
             <span
               style={{
-                fontSize: sceneTokens.typography.eyebrow.fontSize,
-                fontWeight: sceneTokens.typography.eyebrow.fontWeight,
-                letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
-                textTransform: "uppercase",
-                color: sceneTokens.text.muted,
+                fontSize: 11,
+                fontWeight: 500,
+                color: "#EDEEF0",
               }}
             >
-              Story Viewer
+              Story viewer
             </span>
-            <span style={{ color: sceneTokens.borders.contrast, fontSize: 12 }}>/</span>
+            <span style={{ color: "#8C93A1", fontSize: 11 }}>/</span>
             <span
               style={{
-                fontSize: sceneTokens.typography.caption.fontSize,
-                fontWeight: 600,
-                color: sceneTokens.text.secondary,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                fontSize: 11,
+                fontFamily: "IBM Plex Mono, monospace",
+                color: "#8C93A1",
               }}
             >
-              {story?.kind || "Algorithm Visualizer"}
+              {story?.kind || "algorithm-visualizer"}
             </span>
           </div>
         </div>
 
-        {/* Playback status pill */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "3px 12px",
-            borderRadius: sceneTokens.radii.full,
-            backgroundColor: isPlaying ? sceneTokens.status.active.fill : sceneTokens.surfaces.panel,
-            border: `1px solid ${isPlaying ? sceneTokens.status.active.stroke : sceneTokens.borders.subtle}`,
-            color: isPlaying ? sceneTokens.status.active.glow : sceneTokens.text.muted,
-            fontSize: sceneTokens.typography.caption.fontSize,
-            fontWeight: 600,
-          }}
-        >
-          {isPlaying ? (
-            <>
-              <Play className="h-3 w-3 fill-current animate-pulse" /> Autoplaying ({playbackSpeed}×)
-            </>
-          ) : playbackStatus === "completed" ? (
-            <>Completed</>
-          ) : (
-            <>
-              <Pause className="h-3 w-3 fill-current" /> Paused
-            </>
-          )}
+        {/* Top Header Right: Playback status */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Playback status */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "4px 10px",
+              borderRadius: 6,
+              backgroundColor: "#14171B",
+              border: "1px solid #22262B",
+              color: isPlaying ? "#E8A33D" : "#8C93A1",
+              fontSize: 11,
+              fontFamily: "IBM Plex Mono, monospace",
+              fontWeight: 500,
+            }}
+          >
+            {isPlaying ? (
+              <>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    backgroundColor: "#E8A33D",
+                    display: "inline-block",
+                  }}
+                />
+                running ({playbackSpeed}×)
+              </>
+            ) : playbackStatus === "completed" ? (
+              <>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    backgroundColor: "#5FBF77",
+                    display: "inline-block",
+                  }}
+                />
+                completed
+              </>
+            ) : (
+              <>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    backgroundColor: "#8C93A1",
+                    display: "inline-block",
+                  }}
+                />
+                paused
+              </>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Main Workspace Split Layout: Fullscreen Proportions (Left ~30%, Right ~70%) */}
       <main
         style={{
+          position: "relative",
+          zIndex: 1,
           width: "100%",
           flex: 1,
           minHeight: 0,
           display: "flex",
-          gap: sceneTokens.spacing[3],
+          gap: 12,
           alignItems: "stretch",
         }}
       >
-        {/* Left Column (~30% width, ~90% height of viewport): Code & Variable State */}
+        {/* Left Column (~30% width): Code & Variable State */}
         <div
           style={{
             width: "30%",
@@ -239,7 +312,7 @@ export function StoryViewerPage({
             minHeight: 0,
             display: "flex",
             flexDirection: "column",
-            gap: sceneTokens.spacing[3],
+            gap: 12,
           }}
         >
           <CodePanel
@@ -254,7 +327,7 @@ export function StoryViewerPage({
           )}
         </div>
 
-        {/* Right Column (~70% width): Scene (top ~70%) + Explanation & Playback (bottom ~30%) */}
+        {/* Right Column (~70% width): Scene (top) + Explanation & Playback (bottom) */}
         <div
           style={{
             flex: "1 1 70%",
@@ -263,29 +336,29 @@ export function StoryViewerPage({
             minHeight: 0,
             display: "flex",
             flexDirection: "column",
-            gap: sceneTokens.spacing[3],
+            gap: 12,
           }}
         >
-          {/* Visual Scene Stage Canvas (Top ~68% height) */}
+          {/* Visual Scene Stage Canvas */}
           <div
             style={{
               flex: "0 0 68%",
-              minHeight: 340,
-              backgroundColor: sceneTokens.surfaces.panel,
-              border: `1px solid ${sceneTokens.borders.subtle}`,
-              borderRadius: sceneTokens.radii.lg,
+              minHeight: 320,
+              backgroundColor: "#14171B",
+              border: "1px solid #22262B",
+              borderRadius: 10,
               position: "relative",
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
             }}
           >
-            {/* Top-Right Badge: Problem Title replacing the kind badge */}
+            {/* Top-Right Badge: Problem Title */}
             <div
               style={{
                 position: "absolute",
-                top: 12,
-                right: 14,
+                top: 10,
+                right: 12,
                 zIndex: 10,
                 display: "flex",
                 alignItems: "center",
@@ -296,29 +369,17 @@ export function StoryViewerPage({
               {effectiveProblemMeta?.difficultyGuess && (
                 <span
                   style={{
-                    fontSize: sceneTokens.typography.caption.fontSize,
-                    fontWeight: 700,
+                    fontSize: 11,
+                    fontFamily: "IBM Plex Mono, monospace",
+                    fontWeight: 500,
                     padding: "2px 8px",
-                    borderRadius: sceneTokens.radii.full,
-                    backgroundColor:
-                      effectiveProblemMeta.difficultyGuess === "Easy"
-                        ? sceneTokens.status.success.fill
-                        : effectiveProblemMeta.difficultyGuess === "Medium"
-                        ? sceneTokens.status.active.fill
-                        : sceneTokens.status.error.fill,
+                    borderRadius: 6,
+                    backgroundColor: "#1B1F24",
                     color:
                       effectiveProblemMeta.difficultyGuess === "Easy"
-                        ? sceneTokens.status.success.glow
-                        : effectiveProblemMeta.difficultyGuess === "Medium"
-                        ? sceneTokens.status.active.glow
-                        : sceneTokens.status.error.glow,
-                    border: `1px solid ${
-                      effectiveProblemMeta.difficultyGuess === "Easy"
-                        ? sceneTokens.status.success.stroke
-                        : effectiveProblemMeta.difficultyGuess === "Medium"
-                        ? sceneTokens.status.active.stroke
-                        : sceneTokens.status.error.stroke
-                    }`,
+                        ? "#5FBF77"
+                        : "#E8A33D",
+                    border: "1px solid #22262B",
                   }}
                 >
                   {effectiveProblemMeta.difficultyGuess}
@@ -327,18 +388,16 @@ export function StoryViewerPage({
 
               <div
                 style={{
-                  padding: "4px 12px",
-                  borderRadius: sceneTokens.radii.full,
-                  background: sceneTokens.surfaces.canvas,
-                  border: `1px solid ${sceneTokens.borders.contrast}`,
-                  color: sceneTokens.text.primary,
+                  padding: "3px 10px",
+                  borderRadius: 6,
+                  background: "#1B1F24",
+                  border: "1px solid #22262B",
+                  color: "#EDEEF0",
                   fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: "0.02em",
+                  fontWeight: 500,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
                 }}
                 title={problemTitle}
               >
@@ -356,10 +415,10 @@ export function StoryViewerPage({
                     justifyContent: "center",
                     width: 24,
                     height: 24,
-                    borderRadius: sceneTokens.radii.full,
-                    background: sceneTokens.surfaces.canvas,
-                    border: `1px solid ${sceneTokens.borders.subtle}`,
-                    color: sceneTokens.status.mutated.glow,
+                    borderRadius: 6,
+                    background: "#1B1F24",
+                    border: "1px solid #22262B",
+                    color: "#5FA8D3",
                     textDecoration: "none",
                   }}
                   title="Open original problem source"
@@ -378,7 +437,7 @@ export function StoryViewerPage({
                 alignItems: "center",
                 justifyContent: "center",
                 overflow: "auto",
-                padding: sceneTokens.spacing[4],
+                padding: "16px",
               }}
             >
               {isSupported ? (
@@ -402,9 +461,9 @@ export function StoryViewerPage({
                   state={currentState}
                 />
               ) : (
-                <div style={{ textAlign: "center", color: sceneTokens.text.muted }}>
-                  <p style={{ fontWeight: 700 }}>Story kind: {story?.kind}</p>
-                  <p style={{ marginTop: 8, fontSize: sceneTokens.typography.caption.fontSize }}>
+                <div style={{ textAlign: "center", color: "#8C93A1" }}>
+                  <p style={{ fontWeight: 600 }}>Story kind: {story?.kind}</p>
+                  <p style={{ marginTop: 8, fontSize: 12 }}>
                     This story kind isn't visualized yet.
                   </p>
                 </div>
@@ -412,27 +471,27 @@ export function StoryViewerPage({
             </div>
           </div>
 
-          {/* Bottom Area (Remaining ~30% height): Explanation + Waveform + Playback Controls */}
+          {/* Bottom Area: Narrative & Explanation + Playback Controls */}
           <div
             style={{
               flex: "1 1 30%",
               minHeight: 0,
               display: "flex",
               flexDirection: "column",
-              gap: sceneTokens.spacing[2],
+              gap: 8,
               justifyContent: "space-between",
             }}
           >
-            {/* StorySlide Narrative & Explanation Card + Sarvam Voice Waveform Slot */}
+            {/* StorySlide Narrative & Explanation Card */}
             {step && (
               <section
                 style={{
                   flex: 1,
                   minHeight: 0,
-                  borderRadius: sceneTokens.radii.lg,
-                  border: `1px solid ${sceneTokens.borders.subtle}`,
-                  background: sceneTokens.surfaces.panel,
-                  padding: `${sceneTokens.spacing[2]}px ${sceneTokens.spacing[4]}px`,
+                  borderRadius: 10,
+                  border: "1px solid #22262B",
+                  background: "#14171B",
+                  padding: "12px 16px",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "center",
@@ -441,127 +500,123 @@ export function StoryViewerPage({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: sceneTokens.spacing[2] }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span
                       style={{
-                        fontSize: sceneTokens.typography.eyebrow.fontSize,
-                        fontWeight: sceneTokens.typography.eyebrow.fontWeight,
-                        letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
-                        textTransform: "uppercase",
-                        color: sceneTokens.text.muted,
+                        fontSize: 11,
+                        fontFamily: "IBM Plex Mono, monospace",
+                        color: "#8C93A1",
                       }}
                     >
-                      Step {currentStepIndex + 1} of {total}
+                      step {currentStepIndex + 1} / {total}
                     </span>
 
                     {step.stepType === "intro" && (
                       <span
                         style={{
-                          fontSize: sceneTokens.typography.eyebrow.fontSize,
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.1em",
-                          padding: "1px 8px",
-                          borderRadius: sceneTokens.radii.full,
-                          backgroundColor: sceneTokens.status.mutated.fill,
-                          color: sceneTokens.status.mutated.glow,
-                          border: `1px solid ${sceneTokens.status.mutated.stroke}`,
+                          fontSize: 10,
+                          fontFamily: "IBM Plex Mono, monospace",
+                          fontWeight: 600,
+                          padding: "1px 6px",
+                          borderRadius: 6,
+                          backgroundColor: "#1B1F24",
+                          color: "#5FA8D3",
+                          border: "1px solid #22262B",
                         }}
                       >
-                        GOAL
+                        goal
                       </span>
                     )}
 
                     {step.stepType === "summary" && (
                       <span
                         style={{
-                          fontSize: sceneTokens.typography.eyebrow.fontSize,
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.1em",
-                          padding: "1px 8px",
-                          borderRadius: sceneTokens.radii.full,
-                          backgroundColor: sceneTokens.status.active.fill,
-                          color: sceneTokens.status.active.glow,
-                          border: `1px solid ${sceneTokens.status.active.stroke}`,
+                          fontSize: 10,
+                          fontFamily: "IBM Plex Mono, monospace",
+                          fontWeight: 600,
+                          padding: "1px 6px",
+                          borderRadius: 6,
+                          backgroundColor: "#1B1F24",
+                          color: "#5FBF77",
+                          border: "1px solid #22262B",
                         }}
                       >
-                        SUMMARY
+                        summary
                       </span>
                     )}
                   </div>
 
-                  {/* Reserved space for Sarvam Voice Animation / Audio Waveform */}
+                  {/* Narration voice indicator and control */}
                   <div
+                    onClick={isAutoplayBlocked ? unblockAudio : toggleMute}
+                    role="button"
+                    tabIndex={0}
                     style={{
+                      cursor: "pointer",
+                      userSelect: "none",
                       display: "flex",
                       alignItems: "center",
                       gap: 6,
-                      padding: "2px 10px",
-                      borderRadius: sceneTokens.radii.full,
-                      background: sceneTokens.surfaces.canvas,
-                      border: `1px solid ${sceneTokens.borders.subtle}`,
+                      padding: "2px 8px",
+                      borderRadius: 6,
+                      background: "#1B1F24",
+                      border: "1px solid #22262B",
                       fontSize: 11,
-                      color: sceneTokens.text.muted,
-                      fontWeight: 500,
+                      color: isAutoplayBlocked
+                        ? "#E8A33D"
+                        : isMuted
+                        ? "#8C93A1"
+                        : "#EDEEF0",
+                      fontWeight: 400,
                     }}
-                    title="Sarvam AI Audio Narration"
+                    title={
+                      isAutoplayBlocked
+                        ? "Autoplay blocked by browser — Click to enable sound"
+                        : isMuted
+                        ? "Narration muted — Click to unmute"
+                        : isAudioLoading
+                        ? "Generating Sarvam voice audio..."
+                        : isAudioPlaying
+                        ? "Sarvam AI Voice actively narrating — Click to mute"
+                        : "Sarvam AI Voice Narration — Click to mute"
+                    }
                   >
                     <span
                       style={{
                         width: 6,
                         height: 6,
                         borderRadius: "50%",
-                        backgroundColor: isPlaying ? sceneTokens.status.active.glow : sceneTokens.borders.contrast,
+                        backgroundColor: isAutoplayBlocked
+                          ? "#E8A33D"
+                          : isMuted
+                          ? "#8C93A1"
+                          : isAudioLoading
+                          ? "#5FA8D3"
+                          : isAudioPlaying
+                          ? "#E8A33D"
+                          : "#8C93A1",
                         display: "inline-block",
                       }}
                     />
-                    <span>Voice Narration</span>
-                    {/* Futuristic audio waveform bars placeholder */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 2, height: 12 }}>
-                      <span
-                        style={{
-                          width: 2,
-                          height: isPlaying ? 10 : 4,
-                          backgroundColor: sceneTokens.status.active.glow,
-                          borderRadius: 1,
-                        }}
-                      />
-                      <span
-                        style={{
-                          width: 2,
-                          height: isPlaying ? 13 : 6,
-                          backgroundColor: sceneTokens.status.active.glow,
-                          borderRadius: 1,
-                        }}
-                      />
-                      <span
-                        style={{
-                          width: 2,
-                          height: isPlaying ? 8 : 4,
-                          backgroundColor: sceneTokens.status.active.glow,
-                          borderRadius: 1,
-                        }}
-                      />
-                      <span
-                        style={{
-                          width: 2,
-                          height: isPlaying ? 11 : 5,
-                          backgroundColor: sceneTokens.status.active.glow,
-                          borderRadius: 1,
-                        }}
-                      />
-                    </div>
+                    <span>
+                      {isAutoplayBlocked
+                        ? "Enable sound"
+                        : isAudioLoading
+                        ? "Generating voice…"
+                        : isMuted
+                        ? "Voice muted"
+                        : "Voice narration"}
+                    </span>
                   </div>
                 </div>
 
                 <h2
                   style={{
                     margin: 0,
-                    fontSize: sceneTokens.typography.narrative.fontSize,
-                    lineHeight: `${sceneTokens.typography.narrative.lineHeight}px`,
-                    fontWeight: sceneTokens.typography.narrative.fontWeight,
-                    color: sceneTokens.text.primary,
+                    fontSize: 14,
+                    lineHeight: "22px",
+                    fontWeight: 600,
+                    color: "#EDEEF0",
                   }}
                 >
                   {step.text}
@@ -571,9 +626,9 @@ export function StoryViewerPage({
                   <p
                     style={{
                       margin: 0,
-                      fontSize: sceneTokens.typography.body.fontSize,
-                      lineHeight: `${sceneTokens.typography.body.lineHeight}px`,
-                      color: sceneTokens.text.secondary,
+                      fontSize: 13,
+                      lineHeight: "20px",
+                      color: "#8C93A1",
                     }}
                   >
                     {step.narrationText}
@@ -582,7 +637,7 @@ export function StoryViewerPage({
               </section>
             )}
 
-            {/* Playback Controls anchored directly beneath scene and narrative */}
+            {/* Playback Controls */}
             <div style={{ flexShrink: 0 }}>
               <PlaybackControls
                 currentStepIndex={currentStepIndex}

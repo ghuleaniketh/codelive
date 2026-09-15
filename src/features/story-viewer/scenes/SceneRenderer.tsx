@@ -52,8 +52,8 @@ export const SceneRenderer = ({
     }
     case "family-tree": {
       const data = initialData as {
-        nodes: Array<{ id: string; value: number; x: number; y: number }>;
-        edges: Array<{ from: string; to: string }>;
+        nodes: Array<{ id: string; value: number; x: number; y: number; treeId?: string }>;
+        edges: Array<{ from: string; to: string; side?: "left" | "right"; treeId?: string }>;
       };
       return <FamilyTreeScene initialNodes={data.nodes} initialEdges={data.edges} actions={actions} />;
     }

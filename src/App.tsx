@@ -7,8 +7,11 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import TestAuthPage from "./pages/TestAuthPage";
 import { TestScenesPage } from "./features/story-viewer/scenes/TestScenesPage";
+import { StoryDemoPage } from "./pages/StoryDemoPage";
 import { QuestionInputPage } from "./features/question-input/QuestionInputPage";
 import { sceneTokens } from "./features/story-viewer/scenes/sceneTokens";
+
+import { BackgroundVideo } from "./features/story-viewer/BackgroundVideo";
 
 function Router() {
   return (
@@ -17,6 +20,7 @@ function Router() {
       <Route path={"/test-runner-state"} component={TestRunnerState} />
       <Route path={"/test-auth"} component={TestAuthPage} />
       <Route path={"/test-scenes"} component={TestScenesPage} />
+      <Route path={"/story-demo"} component={StoryDemoPage} />
       <Route path={"/"} component={QuestionInputPage} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -35,12 +39,26 @@ function App() {
           <Toaster />
           <div
             style={{
+              position: "relative",
               minHeight: "100vh",
-              backgroundColor: sceneTokens.surfaces.canvas,
-              color: sceneTokens.text.primary,
+              width: "100%",
+              backgroundColor: "#0B0D10",
+              color: "#EDEEF0",
+              overflow: "hidden",
             }}
           >
-            <Router />
+            {/* Shared full-bleed ambient video background layer with clearer 68% --bg scrim */}
+            <BackgroundVideo src="/background.mp4" overlayOpacity={0.68} />
+            <div
+              style={{
+                position: "relative",
+                zIndex: 1,
+                minHeight: "100vh",
+                width: "100%",
+              }}
+            >
+              <Router />
+            </div>
           </div>
         </TooltipProvider>
       </ThemeProvider>

@@ -545,7 +545,7 @@ export function createCityRouteStory(route: CityRouteState): RealWorldStory {
 
   return {
     kind: "city-map",
-    icon: isBfs ? "🚏" : isDijkstra ? "⏱️" : "🧭",
+    icon: isBfs ? "queue" : isDijkstra ? "timer" : "compass",
     title,
     plainEnglish: isBfs
       ? `${action} Breadth-first search checks all nearby places before it moves to a farther street.`

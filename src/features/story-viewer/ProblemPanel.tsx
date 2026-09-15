@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
-import { sceneTokens } from "./scenes/sceneTokens";
 import type { ProblemMeta } from "./types";
 
 export function ProblemPanel({
@@ -15,30 +14,21 @@ export function ProblemPanel({
     return null;
   }
 
-  const difficultyStatus =
-    problemMeta?.difficultyGuess === "Easy"
-      ? sceneTokens.status.success
-      : problemMeta?.difficultyGuess === "Medium"
-      ? sceneTokens.status.active
-      : problemMeta?.difficultyGuess === "Hard"
-      ? sceneTokens.status.error
-      : null;
-
-  const difficultyBadge = difficultyStatus && (
+  const difficultyBadge = problemMeta?.difficultyGuess && (
     <Badge
       variant="outline"
-      key={problemMeta?.difficultyGuess}
+      key={problemMeta.difficultyGuess}
       style={{
-        backgroundColor: difficultyStatus.fill,
-        color: difficultyStatus.glow,
-        borderColor: difficultyStatus.stroke,
-        fontWeight: 700,
-        fontSize: sceneTokens.typography.caption.fontSize,
+        backgroundColor: "#1B1F24",
+        color: problemMeta.difficultyGuess === "Easy" ? "#5FBF77" : "#E8A33D",
+        borderColor: "#22262B",
+        fontWeight: 500,
+        fontSize: 11,
         padding: "2px 8px",
-        borderRadius: sceneTokens.radii.full,
+        borderRadius: 6,
       }}
     >
-      {problemMeta?.difficultyGuess}
+      {problemMeta.difficultyGuess}
     </Badge>
   );
 
@@ -52,9 +42,9 @@ export function ProblemPanel({
         alignItems: "center",
         gap: 4,
         textDecoration: "none",
-        color: sceneTokens.status.mutated.glow,
-        fontSize: sceneTokens.typography.caption.fontSize,
-        fontWeight: 600,
+        color: "#5FA8D3",
+        fontSize: 12,
+        fontWeight: 500,
       }}
       title="Open problem link"
     >
@@ -69,10 +59,10 @@ export function ProblemPanel({
         width: "100%",
         maxWidth: 1200,
         margin: "0 auto",
-        padding: `${sceneTokens.spacing[3]}px ${sceneTokens.spacing[4]}px`,
-        background: sceneTokens.surfaces.panel,
-        borderRadius: sceneTokens.radii.lg,
-        border: `1px solid ${sceneTokens.borders.subtle}`,
+        padding: "12px 16px",
+        background: "#14171B",
+        borderRadius: 10,
+        border: "1px solid #22262B",
       }}
     >
       <div
@@ -80,16 +70,16 @@ export function ProblemPanel({
           display: "flex",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: sceneTokens.spacing[3],
+          gap: 12,
         }}
       >
         {problemMeta?.title && (
           <h2
             style={{
               margin: 0,
-              fontSize: sceneTokens.typography.title.fontSize,
-              fontWeight: sceneTokens.typography.title.fontWeight,
-              color: sceneTokens.text.primary,
+              fontSize: 16,
+              fontWeight: 600,
+              color: "#EDEEF0",
             }}
           >
             {problemMeta.title}
@@ -101,32 +91,30 @@ export function ProblemPanel({
       </div>
 
       {questionText && (
-        <details style={{ marginTop: problemMeta?.title || problemMeta?.difficultyGuess ? sceneTokens.spacing[2] : 0 }}>
+        <details style={{ marginTop: problemMeta?.title || problemMeta?.difficultyGuess ? 8 : 0 }}>
           <summary
             style={{
-              fontSize: sceneTokens.typography.eyebrow.fontSize,
-              fontWeight: sceneTokens.typography.eyebrow.fontWeight,
-              letterSpacing: sceneTokens.typography.eyebrow.letterSpacing,
-              textTransform: "uppercase",
-              color: sceneTokens.text.secondary,
+              fontSize: 11,
+              fontWeight: 500,
+              color: "#8C93A1",
               marginBottom: 4,
               cursor: "pointer",
               userSelect: "none",
             }}
           >
-            Problem Statement (expand)
+            Problem statement (expand)
           </summary>
           <p
             style={{
-              fontSize: sceneTokens.typography.body.fontSize,
-              color: sceneTokens.text.secondary,
+              fontSize: 13,
+              color: "#8C93A1",
               lineHeight: 1.6,
               whiteSpace: "pre-wrap",
-              margin: `${sceneTokens.spacing[2]}px 0 0 0`,
-              padding: sceneTokens.spacing[3],
-              background: sceneTokens.surfaces.card,
-              borderRadius: sceneTokens.radii.md,
-              border: `1px solid ${sceneTokens.borders.subtle}`,
+              margin: "8px 0 0 0",
+              padding: "12px",
+              background: "#0B0D10",
+              borderRadius: 6,
+              border: "1px solid #22262B",
             }}
           >
             {questionText}

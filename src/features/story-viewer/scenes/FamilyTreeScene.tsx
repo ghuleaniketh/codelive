@@ -3,13 +3,19 @@ import { motion } from "framer-motion";
 import { sceneTokens } from "./sceneTokens";
 import { SceneAction } from "./types";
 
-type AccNode = { id: string; value: number; x: number; y: number };
-type AccEdge = { from: string; to: string; side?: "left" | "right" };
+type AccNode = { id: string; value: number; x: number; y: number; treeId?: string };
+type AccEdge = { from: string; to: string; side?: "left" | "right"; treeId?: string };
 
-function computeTreeLayout(
+function computeSingleTreeLayout(
   nodes: AccNode[],
-  edges: AccEdge[]
-): { pos: Record<string, { x: number; y: number }>; width: number; height: number } {
+  edges: AccEdge[],
+  startX: number = 0
+): {
+  pos: Record<string, { x: number; y: number }>;
+  groupWidth: number;
+  maxDepth: number;
+  centerX: number;
+} {
   const leftOf: Record<string, string> = {};
   const rightOf: Record<string, string> = {};
   const hasParent = new Set<string>();
@@ -42,16 +48,84 @@ function computeTreeLayout(
   const ySpacing = 72;
   const marginX = 44;
   const marginTop = 54;
-  const marginBottom = 40;
   const pos: Record<string, { x: number; y: number }> = {};
   order.forEach((id, i) => {
-    pos[id] = { x: marginX + i * xSpacing, y: marginTop + depth[id] * ySpacing };
+    pos[id] = { x: startX + marginX + i * xSpacing, y: marginTop + depth[id] * ySpacing };
   });
 
   const maxDepth = order.reduce((m, id) => Math.max(m, depth[id] ?? 0), 0);
-  const width = Math.max(marginX * 2 + (order.length - 1) * xSpacing + 40, 240);
-  const height = Math.max(marginTop + marginBottom + maxDepth * ySpacing, 160);
-  return { pos, width, height };
+  const groupWidth = order.length > 0 ? marginX * 2 + (order.length - 1) * xSpacing : 0;
+  const centerX =
+    order.length > 0 ? startX + marginX + ((order.length - 1) * xSpacing) / 2 : startX + marginX;
+  return { pos, groupWidth, maxDepth, centerX };
+}
+
+function computeTreeLayout(
+  nodes: AccNode[],
+  edges: AccEdge[]
+): {
+  pos: Record<string, { x: number; y: number }>;
+  width: number;
+  height: number;
+  headers: Array<{ treeId: string; centerX: number }>;
+} {
+  if (nodes.length === 0) {
+    return { pos: {}, width: 240, height: 160, headers: [] };
+  }
+
+  // 1. Group nodes by treeId (undefined/null/empty treeId maps to a single default group)
+  const groupsMap = new Map<string | undefined, AccNode[]>();
+  for (const node of nodes) {
+    const key = node.treeId;
+    const list = groupsMap.get(key);
+    if (list) {
+      list.push(node);
+    } else {
+      groupsMap.set(key, [node]);
+    }
+  }
+
+  const groupGap = 48;
+  const ySpacing = 72;
+  const marginTop = 54;
+  const marginBottom = 40;
+
+  const allPos: Record<string, { x: number; y: number }> = {};
+  const headers: Array<{ treeId: string; centerX: number }> = [];
+  let currentStartX = 0;
+  let globalMaxDepth = 0;
+
+  groupsMap.forEach((groupNodes: AccNode[], treeId: string | undefined) => {
+    const nodeIds = new Set(groupNodes.map((n: AccNode) => n.id));
+    // Defensive: only allow edges where both nodes belong to this specific tree group
+    const groupEdges = edges.filter(
+      (e) =>
+        nodeIds.has(e.from) &&
+        nodeIds.has(e.to) &&
+        (e.treeId === undefined || treeId === undefined || e.treeId === treeId)
+    );
+
+    const { pos, groupWidth, maxDepth, centerX } = computeSingleTreeLayout(
+      groupNodes,
+      groupEdges,
+      currentStartX
+    );
+
+    Object.assign(allPos, pos);
+    globalMaxDepth = Math.max(globalMaxDepth, maxDepth);
+
+    if (treeId !== undefined && treeId !== "") {
+      headers.push({ treeId, centerX });
+    }
+
+    currentStartX += groupWidth + groupGap;
+  });
+
+  const totalContentWidth = Math.max(0, currentStartX - groupGap);
+  const width = Math.max(totalContentWidth + 40, 240);
+  const height = Math.max(marginTop + marginBottom + globalMaxDepth * ySpacing, 160);
+
+  return { pos: allPos, width, height, headers };
 }
 
 export const FamilyTreeScene = ({
@@ -59,8 +133,8 @@ export const FamilyTreeScene = ({
   initialEdges,
   actions,
 }: {
-  initialNodes: Array<{ id: string; value: number; x: number; y: number }>;
-  initialEdges: Array<{ from: string; to: string }>;
+  initialNodes: Array<{ id: string; value: number; x: number; y: number; treeId?: string }>;
+  initialEdges: Array<{ from: string; to: string; side?: "left" | "right"; treeId?: string }>;
   actions: SceneAction[];
 }) => {
   const { nodes, edges } = useMemo(() => {
@@ -76,15 +150,17 @@ export const FamilyTreeScene = ({
           newNodeId: string;
           value: number;
           side?: "left" | "right";
+          treeId?: string;
         };
         if (!accNodes.some((n) => n.id === p.newNodeId)) {
-          accNodes.push({ id: p.newNodeId, value: p.value, x: 0, y: 0 });
+          accNodes.push({ id: p.newNodeId, value: p.value, x: 0, y: 0, treeId: p.treeId });
         }
         if (p.parentId != null && p.parentId !== "" && p.parentId !== "null") {
           accEdges.push({
             from: p.parentId,
             to: p.newNodeId,
             side: p.side,
+            treeId: p.treeId,
           });
         }
       }
@@ -92,35 +168,91 @@ export const FamilyTreeScene = ({
     return { nodes: accNodes, edges: accEdges };
   }, [initialNodes, initialEdges, actions]);
 
-  const { pos, width, height } = useMemo(
+  const { pos, width, height, headers } = useMemo(
     () => computeTreeLayout(nodes, edges),
     [nodes, edges]
   );
 
+  const nodeMap = useMemo(() => {
+    const map = new Map<string, AccNode>();
+    for (const node of nodes) {
+      map.set(node.id, node);
+    }
+    return map;
+  }, [nodes]);
+
   const nodeRadius = sceneTokens.geometry.nodeRadius;
 
-  const nodeShapes = nodes.map((node) => {
+  const { visitedNodeIds, comparedNodeIds, activeNodeId } = useMemo(() => {
+    const visited = new Set<string>();
+    const compared = new Set<string>();
+    let active: string | null = null;
+
+    for (const action of actions) {
+      if (action.component === "TreeNode") {
+        if (action.action === "visit") {
+          const { nodeId } = action.params as { nodeId: string };
+          if (nodeId) {
+            visited.add(String(nodeId));
+            active = String(nodeId);
+          }
+        } else if (action.action === "compare") {
+          const { nodeId, otherId } = action.params as { nodeId: string; otherId: string };
+          if (nodeId) compared.add(String(nodeId));
+          if (otherId) compared.add(String(otherId));
+        } else if (action.action === "insertNode") {
+          const { newNodeId } = action.params as { newNodeId: string };
+          if (newNodeId) {
+            visited.add(String(newNodeId));
+            active = String(newNodeId);
+          }
+        }
+      }
+    }
+    return { visitedNodeIds: visited, comparedNodeIds: compared, activeNodeId: active };
+  }, [actions]);
+
+  const nodeShapes = nodes.map((node, index) => {
     const p = pos[node.id] ?? { x: node.x, y: node.y };
+    const isCompared = comparedNodeIds.has(node.id);
+    const isActive = activeNodeId === node.id;
+    const isVisited = visitedNodeIds.has(node.id) && !isCompared && !isActive;
+
+    const fill = isCompared || isActive
+      ? sceneTokens.status.active.fill
+      : isVisited
+      ? sceneTokens.status.mutated.fill
+      : sceneTokens.surfaces.card;
+
+    const stroke = isCompared || isActive
+      ? sceneTokens.status.active.stroke
+      : isVisited
+      ? sceneTokens.status.mutated.stroke
+      : sceneTokens.borders.contrast;
+
+    const strokeWidth = isCompared || isActive || isVisited
+      ? sceneTokens.geometry.stroke.emphasis
+      : sceneTokens.geometry.stroke.default;
+
     return (
       <motion.circle
-        key={node.id}
+        key={`node-${node.treeId ?? ""}-${node.id}-${index}`}
         cx={p.x}
         cy={p.y}
         r={nodeRadius}
-        fill={sceneTokens.surfaces.card}
-        stroke={sceneTokens.borders.contrast}
-        strokeWidth={sceneTokens.geometry.stroke.default}
-        whileHover={{ r: nodeRadius + 3, strokeWidth: sceneTokens.geometry.stroke.emphasis }}
-        whileTap={{ scale: 0.95 }}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        whileHover={{ r: nodeRadius + 2 }}
       />
     );
   });
 
-  const nodeLabels = nodes.map((node) => {
+  const nodeLabels = nodes.map((node, index) => {
     const p = pos[node.id] ?? { x: node.x, y: node.y };
     return (
       <text
-        key={`label-${node.id}`}
+        key={`label-${node.treeId ?? ""}-${node.id}-${index}`}
         x={p.x}
         y={p.y}
         textAnchor="middle"
@@ -134,13 +266,19 @@ export const FamilyTreeScene = ({
     );
   });
 
-  const edgeShapes = edges.map((edge) => {
+  const edgeShapes = edges.map((edge, index) => {
+    const fromNode = nodeMap.get(edge.from);
+    const toNode = nodeMap.get(edge.to);
+    if (!fromNode || !toNode) return null;
+    // Defensive check: NEVER draw edge between nodes with different treeIds
+    if (fromNode.treeId !== toNode.treeId) return null;
+
     const from = pos[edge.from];
     const to = pos[edge.to];
     if (!from || !to) return null;
     return (
       <motion.line
-        key={`edge-${edge.from}-${edge.to}`}
+        key={`edge-${edge.treeId ?? ""}-${edge.from}-${edge.to}-${index}`}
         x1={from.x}
         y1={from.y}
         x2={to.x}
@@ -160,6 +298,21 @@ export const FamilyTreeScene = ({
       style={{ display: "block", maxWidth: "100%", height: "auto" }}
       aria-label="Family tree visualizer"
     >
+      {headers.map((header) => (
+        <text
+          key={`tree-header-${header.treeId}`}
+          x={header.centerX}
+          y={24}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={sceneTokens.text.secondary}
+          fontSize={sceneTokens.typography.caption.fontSize}
+          fontWeight={600}
+          letterSpacing="0.05em"
+        >
+          {header.treeId.startsWith("Tree") ? header.treeId : `Tree ${header.treeId}`}
+        </text>
+      ))}
       {nodes.length === 0 && (
         <text
           x={width / 2}
@@ -175,74 +328,6 @@ export const FamilyTreeScene = ({
       {edgeShapes}
       {nodeShapes}
       {actions.map((action, i) => {
-        if (action.component === "TreeNode" && action.action === "visit") {
-          const { nodeId } = action.params as { nodeId: string };
-          const p = pos[nodeId];
-          if (!p) return null;
-          return (
-            <motion.circle
-              key={`visit-${i}-${nodeId}`}
-              cx={p.x}
-              cy={p.y}
-              r={nodeRadius}
-              fill={sceneTokens.status.active.fill}
-              stroke={sceneTokens.status.active.stroke}
-              strokeWidth={sceneTokens.geometry.stroke.emphasis}
-              transition={{ duration: sceneTokens.motion.step }}
-            />
-          );
-        }
-        if (action.component === "TreeNode" && action.action === "compare") {
-          const { nodeId, otherId } = action.params as {
-            nodeId: string;
-            otherId: string;
-          };
-          const p1 = pos[nodeId];
-          const p2 = pos[otherId];
-          if (!p1 || !p2) return null;
-          return (
-            <g key={`compare-${i}-${nodeId}-${otherId}`}>
-              <motion.circle
-                cx={p1.x}
-                cy={p1.y}
-                r={nodeRadius}
-                fill={sceneTokens.status.active.fill}
-                stroke={sceneTokens.status.active.stroke}
-                strokeWidth={sceneTokens.geometry.stroke.emphasis}
-                transition={{ duration: sceneTokens.motion.step }}
-              />
-              <motion.circle
-                cx={p2.x}
-                cy={p2.y}
-                r={nodeRadius}
-                fill={sceneTokens.status.active.fill}
-                stroke={sceneTokens.status.active.stroke}
-                strokeWidth={sceneTokens.geometry.stroke.emphasis}
-                transition={{ duration: sceneTokens.motion.step }}
-              />
-            </g>
-          );
-        }
-        if (
-          action.component === "TreeNode" &&
-          action.action === "insertNode"
-        ) {
-          const { newNodeId } = action.params as { newNodeId: string };
-          const p = pos[newNodeId];
-          if (!p) return null;
-          return (
-            <motion.circle
-              key={`insert-${i}-${newNodeId}`}
-              cx={p.x}
-              cy={p.y}
-              r={nodeRadius}
-              fill={sceneTokens.status.mutated.fill}
-              stroke={sceneTokens.status.mutated.stroke}
-              strokeWidth={sceneTokens.geometry.stroke.emphasis}
-              transition={{ duration: sceneTokens.motion.step }}
-            />
-          );
-        }
         if (
           action.component === "TreeNode" &&
           action.action === "compareCandidate"
@@ -275,19 +360,8 @@ export const FamilyTreeScene = ({
           }
           return (
             <g key={`candidate-${i}-${existingId}-${candidateValue}`}>
-              {node && (
-                <motion.circle
-                  cx={base.x}
-                  cy={base.y}
-                  r={nodeRadius}
-                  fill={sceneTokens.status.active.fill}
-                  stroke={sceneTokens.status.active.stroke}
-                  strokeWidth={sceneTokens.geometry.stroke.emphasis}
-                  transition={{ duration: sceneTokens.motion.step }}
-                />
-              )}
               {/* Connector line between compared node and ghost node */}
-              <motion.line
+              <line
                 x1={base.x}
                 y1={base.y}
                 x2={ghostX}
@@ -295,9 +369,6 @@ export const FamilyTreeScene = ({
                 stroke={sceneTokens.status.active.stroke}
                 strokeWidth={sceneTokens.geometry.stroke.subtle}
                 strokeDasharray="3 3"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.8 }}
-                transition={{ duration: sceneTokens.motion.step }}
               />
               {/* Solid background mask circle: occludes any tree edge lines passing behind */}
               <circle
@@ -307,7 +378,7 @@ export const FamilyTreeScene = ({
                 fill={sceneTokens.surfaces.panel}
               />
               {/* Active tinted overlay and dashed candidate circle */}
-              <motion.circle
+              <circle
                 cx={ghostX}
                 cy={ghostY}
                 r={nodeRadius}
@@ -315,9 +386,6 @@ export const FamilyTreeScene = ({
                 stroke={sceneTokens.status.active.stroke}
                 strokeWidth={sceneTokens.geometry.stroke.default}
                 strokeDasharray="4 4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: sceneTokens.motion.step }}
               />
               <text
                 x={ghostX}
