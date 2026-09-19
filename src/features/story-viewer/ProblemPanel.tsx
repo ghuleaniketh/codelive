@@ -21,7 +21,7 @@ export function ProblemPanel({
       style={{
         backgroundColor: "#1B1F24",
         color: problemMeta.difficultyGuess === "Easy" ? "#5FBF77" : "#E8A33D",
-        borderColor: "#22262B",
+        borderColor: "rgba(0, 240, 255, 0.4)",
         fontWeight: 500,
         fontSize: 11,
         padding: "2px 8px",
@@ -62,7 +62,8 @@ export function ProblemPanel({
         padding: "12px 16px",
         background: "#14171B",
         borderRadius: 10,
-        border: "1px solid #22262B",
+        border: "1px solid #00F0FF",
+        boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
       }}
     >
       <div
@@ -114,7 +115,7 @@ export function ProblemPanel({
               padding: "12px",
               background: "#0B0D10",
               borderRadius: 6,
-              border: "1px solid #22262B",
+              border: "1px solid rgba(0, 240, 255, 0.4)",
             }}
           >
             {questionText}

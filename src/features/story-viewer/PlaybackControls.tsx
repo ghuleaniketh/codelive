@@ -43,7 +43,8 @@ export function PlaybackControls({
         gap: 12,
         padding: "8px 12px",
         background: "#14171B",
-        border: "1px solid #22262B",
+        border: "1px solid #00F0FF",
+        boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
         borderRadius: 10,
         boxSizing: "border-box",
       }}
@@ -55,17 +56,17 @@ export function PlaybackControls({
           size="sm"
           onClick={onPrev}
           disabled={currentStepIndex === 0}
-          className="hover:bg-[#1B1F24] hover:text-[#EDEEF0] focus-visible:ring-1 focus-visible:ring-[#E8A33D]"
+          className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.15)] hover:text-[#00F0FF] hover:border-[#00F0FF] hover:shadow-[0_0_10px_rgba(0,240,255,0.3)] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
           style={{
             color: "#EDEEF0",
             borderRadius: 6,
-            border: "1px solid #22262B",
+            border: "1px solid #00F0FF",
             fontSize: 12,
             height: 28,
             padding: "0 10px",
           }}
         >
-          <ChevronLeft className="mr-1 h-3.5 w-3.5 text-[#8C93A1]" /> Prev
+          <ChevronLeft className="mr-1 h-3.5 w-3.5 text-[#00F0FF]" /> Prev
         </Button>
 
         {onTogglePlay && (
@@ -75,11 +76,12 @@ export function PlaybackControls({
             onClick={onTogglePlay}
             aria-label={isPlaying ? "Pause autoplay (Space)" : "Start autoplay (Space)"}
             title={isPlaying ? "Pause autoplay (Space)" : "Start autoplay (Space)"}
-            className="hover:bg-[#1B1F24] focus-visible:ring-1 focus-visible:ring-[#E8A33D]"
+            className="transition-all duration-150 hover:bg-[#38BDF8] hover:shadow-[0_0_15px_rgba(0,240,255,0.5)] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
             style={{
-              color: isPlaying ? "#0B0D10" : "#EDEEF0",
-              backgroundColor: isPlaying ? "#E8A33D" : "#1B1F24",
-              border: `1px solid ${isPlaying ? "#E8A33D" : "#22262B"}`,
+              color: isPlaying ? "#0B0D10" : "#00F0FF",
+              backgroundColor: isPlaying ? "#00F0FF" : "#1B1F24",
+              border: "1px solid #00F0FF",
+              boxShadow: isPlaying ? "0 0 12px rgba(0, 240, 255, 0.4)" : "none",
               borderRadius: 6,
               fontSize: 12,
               fontWeight: 600,
@@ -105,17 +107,17 @@ export function PlaybackControls({
           size="sm"
           onClick={onNext}
           disabled={currentStepIndex === totalSteps - 1}
-          className="hover:bg-[#1B1F24] hover:text-[#EDEEF0] focus-visible:ring-1 focus-visible:ring-[#E8A33D]"
+          className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.15)] hover:text-[#00F0FF] hover:border-[#00F0FF] hover:shadow-[0_0_10px_rgba(0,240,255,0.3)] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
           style={{
             color: "#EDEEF0",
             borderRadius: 6,
-            border: "1px solid #22262B",
+            border: "1px solid #00F0FF",
             fontSize: 12,
             height: 28,
             padding: "0 10px",
           }}
         >
-          Next <ChevronRight className="ml-1 h-3.5 w-3.5 text-[#8C93A1]" />
+          Next <ChevronRight className="ml-1 h-3.5 w-3.5 text-[#00F0FF]" />
         </Button>
 
         <span
@@ -136,11 +138,11 @@ export function PlaybackControls({
           size="sm"
           onClick={onRestart}
           disabled={currentStepIndex === 0}
-          className="hover:bg-[#1B1F24] hover:text-[#EDEEF0] focus-visible:ring-1 focus-visible:ring-[#E8A33D]"
+          className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.15)] hover:text-[#00F0FF] hover:border-[#00F0FF] hover:shadow-[0_0_10px_rgba(0,240,255,0.3)] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
           style={{
             color: "#8C93A1",
             borderRadius: 6,
-            border: "1px solid #22262B",
+            border: "1px solid #00F0FF",
             fontSize: 12,
             height: 28,
             padding: "0 8px",
@@ -171,16 +173,17 @@ export function PlaybackControls({
                 key={s}
                 variant="ghost"
                 size="sm"
-                className="hover:bg-[#1B1F24] hover:text-[#EDEEF0] focus-visible:ring-1 focus-visible:ring-[#E8A33D]"
+                className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.2)] hover:text-[#00F0FF] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
                 style={{
                   fontFamily: "IBM Plex Mono, monospace",
                   fontSize: 11,
                   padding: "0 6px",
                   height: 24,
                   borderRadius: 6,
-                  border: `1px solid ${isSelected ? "#E8A33D" : "#22262B"}`,
-                  background: isSelected ? "#1B1F24" : "transparent",
-                  color: isSelected ? "#E8A33D" : "#8C93A1",
+                  border: `1px solid ${isSelected ? "#00F0FF" : "rgba(0, 240, 255, 0.4)"}`,
+                  background: isSelected ? "#00F0FF" : "transparent",
+                  color: isSelected ? "#0B0D10" : "#8C93A1",
+                  boxShadow: isSelected ? "0 0 8px rgba(0, 240, 255, 0.4)" : "none",
                   fontWeight: isSelected ? 600 : 400,
                 }}
                 onClick={() => setSpeed && setSpeed(Number(s))}
@@ -203,7 +206,7 @@ export function PlaybackControls({
             minWidth: 80,
             maxWidth: 160,
             height: 4,
-            accentColor: "#E8A33D",
+            accentColor: "#00F0FF",
             borderRadius: 6,
             cursor: "pointer",
           }}

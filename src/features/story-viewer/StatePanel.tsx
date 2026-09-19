@@ -29,7 +29,8 @@ export function StatePanel({
       style={{
         width: "100%",
         background: "#14171B",
-        border: "1px solid #22262B",
+        border: "1px solid #00F0FF",
+        boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
         borderRadius: 10,
         padding: "12px",
         boxSizing: "border-box",
@@ -42,7 +43,7 @@ export function StatePanel({
           justifyContent: "space-between",
           marginBottom: "8px",
           paddingBottom: "8px",
-          borderBottom: "1px solid #22262B",
+          borderBottom: "1px solid rgba(0, 240, 255, 0.3)",
         }}
       >
         <span
@@ -91,7 +92,7 @@ export function StatePanel({
                 padding: "4px 8px",
                 background: "#1B1F24",
                 borderRadius: 6,
-                border: "1px solid #22262B",
+                border: "1px solid rgba(0, 240, 255, 0.4)",
               }}
             >
               <span

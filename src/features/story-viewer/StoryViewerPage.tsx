@@ -24,6 +24,8 @@ const SUPPORTED_KINDS = new Set([
   "recursion-stairs",
   "delivery-desk",
   "workshop",
+  "ledger-grid",
+  "timeline-track",
 ]) as ReadonlySet<string>;
 
 export function StoryViewerPage({
@@ -31,12 +33,16 @@ export function StoryViewerPage({
   problemMeta,
   questionText,
   initialAudioLanguage = "en-IN",
+  initialStep = 0,
+  autoPlay = true,
   onBack,
 }: {
   story: Story;
   problemMeta?: ProblemMeta;
   questionText: string;
   initialAudioLanguage?: string;
+  initialStep?: number;
+  autoPlay?: boolean;
   onBack: () => void;
 }) {
   const steps = story?.steps ?? [];
@@ -46,8 +52,6 @@ export function StoryViewerPage({
     effectiveProblemMeta?.title ||
     (questionText ? questionText.slice(0, 60) : "") ||
     (story?.kind ? story.kind.replace(/-/g, " ").toUpperCase() : "ALGORITHM VISUALIZER");
-
-  const [audioLanguage, setAudioLanguage] = useState(initialAudioLanguage);
 
   const {
     currentStepIndex,
@@ -65,22 +69,24 @@ export function StoryViewerPage({
     stepIntervalMs,
   } = useStoryPlayback({
     totalSteps: total,
-    autoPlay: true,
+    initialStep,
+    autoPlay,
     enableInternalTimer: false,
   });
 
   const step = steps[currentStepIndex];
 
   const {
-    isLoading: isAudioLoading,
     isAudioPlaying,
     isMuted,
     isAutoplayBlocked,
+    isUsingSpeechFallback,
     toggleMute,
     unblockAudio,
   } = useStepAudio({
+    audioUrl: step?.audioUrl,
     narrationText: step?.narrationText,
-    language: audioLanguage,
+    language: initialAudioLanguage,
     playbackSpeed,
     isPlaying,
     isCompleted,
@@ -180,17 +186,18 @@ export function StoryViewerPage({
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="hover:bg-[#1B1F24] hover:text-[#EDEEF0] transition-colors"
+            className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.15)] hover:text-[#00F0FF] hover:border-[#00F0FF] hover:shadow-[0_0_10px_rgba(0,240,255,0.3)]"
             style={{
-              color: "#8C93A1",
+              color: "#EDEEF0",
               fontSize: 12,
               borderRadius: 6,
-              border: "1px solid #22262B",
+              border: "1px solid #00F0FF",
+              boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)",
               background: "#14171B",
               height: 32,
             }}
           >
-            <ArrowLeft className="mr-1.5 h-3.5 w-3.5 text-[#8C93A1]" /> New problem
+            <ArrowLeft className="mr-1.5 h-3.5 w-3.5 text-[#00F0FF]" /> New problem
           </Button>
 
           <div
@@ -201,7 +208,8 @@ export function StoryViewerPage({
               padding: "4px 10px",
               borderRadius: 6,
               background: "#14171B",
-              border: "1px solid #22262B",
+              border: "1px solid #00F0FF",
+              boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)",
             }}
           >
             <span
@@ -237,8 +245,9 @@ export function StoryViewerPage({
               padding: "4px 10px",
               borderRadius: 6,
               backgroundColor: "#14171B",
-              border: "1px solid #22262B",
-              color: isPlaying ? "#E8A33D" : "#8C93A1",
+              border: "1px solid #00F0FF",
+              boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)",
+              color: isPlaying ? "#00F0FF" : "#8C93A1",
               fontSize: 11,
               fontFamily: "IBM Plex Mono, monospace",
               fontWeight: 500,
@@ -251,7 +260,8 @@ export function StoryViewerPage({
                     width: 6,
                     height: 6,
                     borderRadius: "50%",
-                    backgroundColor: "#E8A33D",
+                    backgroundColor: "#00F0FF",
+                    boxShadow: "0 0 6px rgba(0, 240, 255, 0.6)",
                     display: "inline-block",
                   }}
                 />
@@ -345,7 +355,8 @@ export function StoryViewerPage({
               flex: "0 0 68%",
               minHeight: 320,
               backgroundColor: "#14171B",
-              border: "1px solid #22262B",
+              border: "1px solid #00F0FF",
+              boxShadow: "0 0 20px rgba(0, 240, 255, 0.2)",
               borderRadius: 10,
               position: "relative",
               display: "flex",
@@ -379,7 +390,7 @@ export function StoryViewerPage({
                       effectiveProblemMeta.difficultyGuess === "Easy"
                         ? "#5FBF77"
                         : "#E8A33D",
-                    border: "1px solid #22262B",
+                    border: "1px solid rgba(0, 240, 255, 0.4)",
                   }}
                 >
                   {effectiveProblemMeta.difficultyGuess}
@@ -391,7 +402,7 @@ export function StoryViewerPage({
                   padding: "3px 10px",
                   borderRadius: 6,
                   background: "#1B1F24",
-                  border: "1px solid #22262B",
+                  border: "1px solid rgba(0, 240, 255, 0.4)",
                   color: "#EDEEF0",
                   fontSize: 12,
                   fontWeight: 500,
@@ -417,7 +428,7 @@ export function StoryViewerPage({
                     height: 24,
                     borderRadius: 6,
                     background: "#1B1F24",
-                    border: "1px solid #22262B",
+                    border: "1px solid rgba(0, 240, 255, 0.4)",
                     color: "#5FA8D3",
                     textDecoration: "none",
                   }}
@@ -489,7 +500,8 @@ export function StoryViewerPage({
                   flex: 1,
                   minHeight: 0,
                   borderRadius: 10,
-                  border: "1px solid #22262B",
+                  border: "1px solid #00F0FF",
+                  boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
                   background: "#14171B",
                   padding: "12px 16px",
                   display: "flex",
@@ -521,7 +533,7 @@ export function StoryViewerPage({
                           borderRadius: 6,
                           backgroundColor: "#1B1F24",
                           color: "#5FA8D3",
-                          border: "1px solid #22262B",
+                          border: "1px solid rgba(0, 240, 255, 0.4)",
                         }}
                       >
                         goal
@@ -538,7 +550,7 @@ export function StoryViewerPage({
                           borderRadius: 6,
                           backgroundColor: "#1B1F24",
                           color: "#5FBF77",
-                          border: "1px solid #22262B",
+                          border: "1px solid rgba(0, 240, 255, 0.4)",
                         }}
                       >
                         summary
@@ -546,67 +558,68 @@ export function StoryViewerPage({
                     )}
                   </div>
 
-                  {/* Narration voice indicator and control */}
-                  <div
-                    onClick={isAutoplayBlocked ? unblockAudio : toggleMute}
-                    role="button"
-                    tabIndex={0}
-                    style={{
-                      cursor: "pointer",
-                      userSelect: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "2px 8px",
-                      borderRadius: 6,
-                      background: "#1B1F24",
-                      border: "1px solid #22262B",
-                      fontSize: 11,
-                      color: isAutoplayBlocked
-                        ? "#E8A33D"
-                        : isMuted
-                        ? "#8C93A1"
-                        : "#EDEEF0",
-                      fontWeight: 400,
-                    }}
-                    title={
-                      isAutoplayBlocked
-                        ? "Autoplay blocked by browser — Click to enable sound"
-                        : isMuted
-                        ? "Narration muted — Click to unmute"
-                        : isAudioLoading
-                        ? "Generating Sarvam voice audio..."
-                        : isAudioPlaying
-                        ? "Sarvam AI Voice actively narrating — Click to mute"
-                        : "Sarvam AI Voice Narration — Click to mute"
-                    }
-                  >
-                    <span
+                  {/* Narration voice indicator and sound controls */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <div
+                      onClick={isAutoplayBlocked ? unblockAudio : toggleMute}
+                      role="button"
+                      tabIndex={0}
                       style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        backgroundColor: isAutoplayBlocked
-                          ? "#E8A33D"
+                        cursor: "pointer",
+                        userSelect: "none",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "3px 8px",
+                        borderRadius: 6,
+                        background: isAutoplayBlocked ? "rgba(0, 240, 255, 0.15)" : "#1B1F24",
+                        border: `1px solid ${isAutoplayBlocked ? "#00F0FF" : "rgba(0, 240, 255, 0.4)"}`,
+                        boxShadow: isAutoplayBlocked ? "0 0 10px rgba(0, 240, 255, 0.3)" : "none",
+                        fontSize: 11,
+                        color: isAutoplayBlocked
+                          ? "#00F0FF"
                           : isMuted
                           ? "#8C93A1"
-                          : isAudioLoading
-                          ? "#5FA8D3"
-                          : isAudioPlaying
-                          ? "#E8A33D"
-                          : "#8C93A1",
-                        display: "inline-block",
+                          : "#EDEEF0",
+                        fontWeight: isAutoplayBlocked ? 600 : 400,
                       }}
-                    />
-                    <span>
-                      {isAutoplayBlocked
-                        ? "Enable sound"
-                        : isAudioLoading
-                        ? "Generating voice…"
-                        : isMuted
-                        ? "Voice muted"
-                        : "Voice narration"}
-                    </span>
+                      title={
+                        isAutoplayBlocked
+                          ? "Autoplay blocked by browser — Click to enable sound"
+                          : isMuted
+                          ? "Narration muted — Click to unmute"
+                          : isAudioPlaying
+                          ? "Voice actively narrating — Click to mute"
+                          : "Voice narration — Click to mute"
+                      }
+                    >
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          backgroundColor: isAutoplayBlocked
+                            ? "#00F0FF"
+                            : isMuted
+                            ? "#8C93A1"
+                            : isAudioPlaying
+                            ? "#00F0FF"
+                            : "#8C93A1",
+                          display: "inline-block",
+                        }}
+                      />
+                      <span>
+                        {isAutoplayBlocked
+                          ? "Enable sound"
+                          : isMuted
+                          ? "Voice muted"
+                          : isAudioPlaying
+                          ? "Voice playing"
+                          : isUsingSpeechFallback
+                          ? "Web speech voice"
+                          : "Voice narration"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

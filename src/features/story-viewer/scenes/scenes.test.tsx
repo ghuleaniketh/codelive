@@ -287,5 +287,92 @@ describe("Visual Scenes Component Suite", () => {
     // No line element should be drawn for the invalid cross-tree edge
     expect(markup).not.toContain("<line");
   });
+
+  it("LedgerGridScene renders row and column string headers and cell states correctly", () => {
+    const initialData = {
+      rows: 6,
+      cols: 4,
+      rowLabels: ["", "a", "b", "c", "d", "e"],
+      colLabels: ["", "a", "c", "e"],
+    };
+
+    const actions = [
+      { component: "Cell" as const, action: "setValue" as const, params: { row: 0, col: 0, value: 0 } },
+      { component: "Cell" as const, action: "markBase" as const, params: { row: 0, col: 0 } },
+      {
+        component: "Cell" as const,
+        action: "showDependency" as const,
+        params: { row: 1, col: 1, dependsOn: [{ row: 0, col: 0 }] },
+      },
+      { component: "Cell" as const, action: "setValue" as const, params: { row: 1, col: 1, value: 1 } },
+      { component: "Cell" as const, action: "markFinal" as const, params: { row: 5, col: 3 } },
+      { component: "Cell" as const, action: "setValue" as const, params: { row: 5, col: 3, value: 3 } },
+    ];
+
+    const markup = renderToStaticMarkup(
+      <SceneRenderer
+        kind="ledger-grid"
+        initialData={initialData}
+        actions={actions}
+      />
+    );
+
+    // Row & Col headers with string labels
+    expect(markup).toContain("a");
+    expect(markup).toContain("b");
+    expect(markup).toContain("c");
+    expect(markup).toContain("d");
+    expect(markup).toContain("e");
+    // Values
+    expect(markup).toContain("0");
+    expect(markup).toContain("1");
+    expect(markup).toContain("3");
+    expect(markup).toContain("RES");
+    // SVG connector
+    expect(markup).toContain("<svg");
+    expect(markup).toContain("dep-arrow-head");
+  });
+
+  it("TimelineTrackScene renders number line axis and interval bars correctly", () => {
+    const initialData = {
+      min: 0,
+      max: 20,
+      intervals: [
+        { id: "i1", start: 1, end: 3 },
+        { id: "i2", start: 2, end: 6 },
+        { id: "i3", start: 8, end: 10 },
+      ],
+    };
+
+    const actions = [
+      {
+        component: "IntervalBar" as const,
+        action: "compareOverlap" as const,
+        params: { idA: "i1", idB: "i2", overlaps: true },
+      },
+      {
+        component: "IntervalBar" as const,
+        action: "merge" as const,
+        params: { intoId: "i1", fromIds: ["i1", "i2"], newStart: 1, newEnd: 6 },
+      },
+    ];
+
+    const markup = renderToStaticMarkup(
+      <SceneRenderer
+        kind="timeline-track"
+        initialData={initialData}
+        actions={actions}
+      />
+    );
+
+    // Number line axis
+    expect(markup).toContain("Timeline Track");
+    // Merged interval [1, 6]
+    expect(markup).toContain("[1, 6]");
+    expect(markup).toContain("MERGED");
+    // Other interval [8, 10]
+    expect(markup).toContain("[8, 10]");
+  });
 });
+
 

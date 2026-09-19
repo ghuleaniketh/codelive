@@ -38,11 +38,11 @@ export function ProgrammingLanguageSelector({
         <Button
           variant="ghost"
           size={size === "sm" ? "sm" : "default"}
-          className="group relative flex items-center justify-between gap-2.5 rounded-[6px] border border-[#22262B] bg-[#14171B] px-3 py-1.5 text-xs font-normal text-[#EDEEF0] transition-colors duration-150 hover:border-[#8C93A1] hover:bg-[#1B1F24] focus-visible:ring-1 focus-visible:ring-[#E8A33D]"
-          style={{ height: size === "sm" ? 32 : 36, minWidth: 150 }}
+          className="group relative flex items-center justify-between gap-2.5 rounded-[6px] border border-[#00F0FF] bg-[#14171B] px-3 py-1.5 text-xs font-normal text-[#EDEEF0] transition-all duration-150 hover:bg-[rgba(0,240,255,0.12)] hover:border-[#00F0FF] hover:text-[#00F0FF] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
+          style={{ height: size === "sm" ? 32 : 36, minWidth: 150, boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)" }}
         >
           <span className="flex items-center gap-2">
-            <span className="font-medium text-[#EDEEF0]">
+            <span className="font-medium">
               {current.label}
             </span>
             <span className="font-mono text-[11px] text-[#8C93A1]">
@@ -55,7 +55,7 @@ export function ProgrammingLanguageSelector({
 
       <DropdownMenuContent
         align="start"
-        className="w-64 rounded-[10px] border border-[#22262B] bg-[#1B1F24] p-1.5 shadow-none"
+        className="w-64 rounded-[10px] border border-[#00F0FF] bg-[#1B1F24] p-1.5 shadow-[0_0_15px_rgba(0,240,255,0.2)]"
       >
         <DropdownMenuLabel className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-[#8C93A1]">
           <Code2 className="h-3.5 w-3.5 text-[#8C93A1]" />
@@ -71,13 +71,13 @@ export function ProgrammingLanguageSelector({
               onClick={() => onChange(lang.id)}
               className={`flex cursor-pointer items-center justify-between rounded-[6px] px-2.5 py-2 text-xs transition-colors duration-100 ${
                 isSelected
-                  ? "bg-[#14171B] text-[#EDEEF0] font-medium border border-[#22262B]"
-                  : "text-[#EDEEF0] hover:bg-[#14171B]"
+                  ? "bg-[#14171B] text-[#00F0FF] font-medium border border-[#00F0FF]"
+                  : "text-[#EDEEF0] hover:bg-[rgba(0,240,255,0.12)] hover:text-[#00F0FF]"
               }`}
             >
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-medium text-[#EDEEF0]">{lang.label}</span>
+                  <span className="font-medium">{lang.label}</span>
                   <span className="font-mono text-[11px] text-[#8C93A1]">
                     {lang.badge}
                   </span>
@@ -88,7 +88,7 @@ export function ProgrammingLanguageSelector({
               </div>
 
               {isSelected && (
-                <Check className="h-3.5 w-3.5 text-[#E8A33D] shrink-0 ml-2" />
+                <Check className="h-3.5 w-3.5 text-[#00F0FF] shrink-0 ml-2" />
               )}
             </DropdownMenuItem>
           );
@@ -119,11 +119,11 @@ export function SarvamVoiceLanguageSelector({
         <Button
           variant="ghost"
           size={size === "sm" ? "sm" : "default"}
-          className="group relative flex items-center justify-between gap-2.5 rounded-[6px] border border-[#22262B] bg-[#14171B] px-3 py-1.5 text-xs font-normal text-[#EDEEF0] transition-colors duration-150 hover:border-[#8C93A1] hover:bg-[#1B1F24] focus-visible:ring-1 focus-visible:ring-[#E8A33D]"
-          style={{ height: size === "sm" ? 32 : 36, minWidth: 170 }}
+          className="group relative flex items-center justify-between gap-2.5 rounded-[6px] border border-[#00F0FF] bg-[#14171B] px-3 py-1.5 text-xs font-normal text-[#EDEEF0] transition-all duration-150 hover:bg-[rgba(0,240,255,0.12)] hover:border-[#00F0FF] hover:text-[#00F0FF] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
+          style={{ height: size === "sm" ? 32 : 36, minWidth: 170, boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)" }}
         >
           <div className="flex items-center gap-1.5">
-            <span className="font-medium text-[#EDEEF0]">
+            <span className="font-medium">
               {current.nativeLabel}
             </span>
             <span className="text-[11px] text-[#8C93A1]">
@@ -136,7 +136,7 @@ export function SarvamVoiceLanguageSelector({
 
       <DropdownMenuContent
         align="start"
-        className="w-72 max-h-80 overflow-y-auto rounded-[10px] border border-[#22262B] bg-[#1B1F24] p-1.5 shadow-none"
+        className="w-72 max-h-80 overflow-y-auto rounded-[10px] border border-[#00F0FF] bg-[#1B1F24] p-1.5 shadow-[0_0_15px_rgba(0,240,255,0.2)]"
       >
         <div className="px-2 py-1.5">
           <div className="flex items-center justify-between">
@@ -162,13 +162,13 @@ export function SarvamVoiceLanguageSelector({
               onClick={() => onChange(lang.code)}
               className={`flex cursor-pointer items-center justify-between rounded-[6px] px-2.5 py-2 text-xs transition-colors duration-100 ${
                 isSelected
-                  ? "bg-[#14171B] text-[#EDEEF0] font-medium border border-[#22262B]"
-                  : "text-[#EDEEF0] hover:bg-[#14171B]"
+                  ? "bg-[#14171B] text-[#00F0FF] font-medium border border-[#00F0FF]"
+                  : "text-[#EDEEF0] hover:bg-[rgba(0,240,255,0.12)] hover:text-[#00F0FF]"
               }`}
             >
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-medium text-[#EDEEF0]">
+                  <span className="font-medium">
                     {lang.nativeLabel}
                   </span>
                   <span className="text-[11px] text-[#8C93A1]">
@@ -181,7 +181,7 @@ export function SarvamVoiceLanguageSelector({
               </div>
 
               {isSelected && (
-                <Check className="h-3.5 w-3.5 text-[#E8A33D] shrink-0 ml-2" />
+                <Check className="h-3.5 w-3.5 text-[#00F0FF] shrink-0 ml-2" />
               )}
             </DropdownMenuItem>
           );

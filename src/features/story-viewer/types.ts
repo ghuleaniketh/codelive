@@ -10,6 +10,7 @@ export type StoryStep = {
   index: number;
   text: string;
   narrationText: string;
+  audioUrl?: string;
   state?: Record<string, string | number | boolean>;
   codeLines?: number[];
   sceneActions: SceneAction[];
@@ -27,7 +28,9 @@ export type StoryKind =
   | "conveyor-loop"
   | "workshop"
   | "delivery-desk"
-  | "workbench";
+  | "workbench"
+  | "ledger-grid"
+  | "timeline-track";
 
 export type Story = {
   id: string;

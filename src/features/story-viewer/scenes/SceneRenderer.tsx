@@ -9,7 +9,9 @@ import { ConveyorLoopScene } from "./ConveyorLoopScene";
 import { RecursionStairsScene } from "./RecursionStairsScene";
 import { DeliveryDeskScene } from "./DeliveryDeskScene";
 import { WorkshopScene } from "./WorkshopScene";
-import { SceneAction } from "./types";
+import { LedgerGridScene } from "./LedgerGridScene";
+import { TimelineTrackScene } from "./TimelineTrackScene";
+import { SceneAction, LedgerGridInitialData, TimelineTrackInitialData } from "./types";
 
 export const SceneRenderer = ({
   kind,
@@ -28,7 +30,9 @@ export const SceneRenderer = ({
     | "conveyor-loop"
     | "recursion-stairs"
     | "delivery-desk"
-    | "workshop";
+    | "workshop"
+    | "ledger-grid"
+    | "timeline-track";
   initialData: unknown;
   actions: SceneAction[];
   state?: Record<string, string | number | boolean>;
@@ -113,6 +117,26 @@ export const SceneRenderer = ({
         secondValue?: number;
       };
       return <WorkshopScene initialData={data} actions={actions} />;
+    }
+    case "ledger-grid": {
+      const data = initialData as LedgerGridInitialData | undefined;
+      return (
+        <LedgerGridScene
+          initialData={data}
+          actions={actions}
+          state={state}
+        />
+      );
+    }
+    case "timeline-track": {
+      const data = initialData as TimelineTrackInitialData | undefined;
+      return (
+        <TimelineTrackScene
+          initialData={data}
+          actions={actions}
+          state={state}
+        />
+      );
     }
     default:
       return null;

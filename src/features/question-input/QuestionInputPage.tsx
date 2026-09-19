@@ -35,12 +35,17 @@ const PIPELINE_STAGES: PipelineStage[] = [
   {
     id: "story",
     label: "Create story",
-    terminalLog: "> generating interactive scene actions & narration…",
+    terminalLog: "> generating interactive scene actions & scene timeline…",
+  },
+  {
+    id: "voice",
+    label: "Synthesize voice",
+    terminalLog: "> pre-generating Sarvam AI voice narration & caching audio…",
   },
   {
     id: "finalize",
     label: "Finalize",
-    terminalLog: "> synchronizing timeline & assembling visual studio…",
+    terminalLog: "> assembling visual studio & preparing auto-playback…",
   },
 ];
 
@@ -61,7 +66,7 @@ export function QuestionInputPage() {
       return;
     }
 
-    const stageIntervals = [2200, 2600, 1800, 3000];
+    const stageIntervals = [2200, 2600, 1800, 3200, 2000];
     let currentIdx = 0;
     let timerId: ReturnType<typeof setTimeout>;
 
@@ -136,6 +141,29 @@ export function QuestionInputPage() {
         boxSizing: "border-box",
       }}
     >
+      {/* Top Right Logo */}
+      <div
+        style={{
+          position: "absolute",
+          top: "24px",
+          right: "28px",
+          display: "flex",
+          alignItems: "center",
+          zIndex: 10,
+        }}
+      >
+        <img
+          src="/ntlap.png"
+          alt="Logo"
+          style={{
+            height: "150px",
+            width: "auto",
+            objectFit: "contain",
+            display: "block",
+          }}
+        />
+      </div>
+
       {/* Main Terminal-Style Container (Left-Aligned / Structured) */}
       <div
         style={{
@@ -149,7 +177,8 @@ export function QuestionInputPage() {
         <div
           style={{
             background: "#14171B",
-            border: "1px solid #22262B",
+            border: "1px solid #00F0FF",
+            boxShadow: "0 0 20px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.05)",
             borderRadius: 10,
             padding: "32px",
             boxSizing: "border-box",
@@ -166,7 +195,8 @@ export function QuestionInputPage() {
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  backgroundColor: "#E8A33D",
+                  backgroundColor: "#00F0FF",
+                  boxShadow: "0 0 8px rgba(0, 240, 255, 0.6)",
                   display: "inline-block",
                 }}
               />
@@ -225,7 +255,8 @@ export function QuestionInputPage() {
                   rows={5}
                   style={{
                     background: "#0B0D10",
-                    border: "1px solid #22262B",
+                    border: "1px solid #00F0FF",
+                    boxShadow: "0 0 10px rgba(0, 240, 255, 0.15)",
                     color: "#EDEEF0",
                     fontSize: 13,
                     lineHeight: 1.6,
@@ -291,9 +322,9 @@ export function QuestionInputPage() {
                   style={{
                     padding: "10px 12px",
                     borderRadius: 6,
-                    border: "1px solid #22262B",
+                    border: "1px solid #00F0FF",
                     background: "#1B1F24",
-                    color: "#E8A33D",
+                    color: "#00F0FF",
                     fontSize: 12,
                     fontFamily: "IBM Plex Mono, monospace",
                   }}
@@ -309,7 +340,7 @@ export function QuestionInputPage() {
                   alignItems: "center",
                   justifyContent: "space-between",
                   paddingTop: 8,
-                  borderTop: "1px solid #22262B",
+                  borderTop: "1px solid rgba(0, 240, 255, 0.3)",
                 }}
               >
                 {/* AI Sandbox Ready Status */}
@@ -319,7 +350,8 @@ export function QuestionInputPage() {
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      backgroundColor: "#5FBF77",
+                      backgroundColor: "#00F0FF",
+                      boxShadow: "0 0 6px rgba(0, 240, 255, 0.6)",
                       display: "inline-block",
                     }}
                   />
@@ -346,11 +378,13 @@ export function QuestionInputPage() {
                   <Button
                     onClick={handleSubmit}
                     disabled={!questionText.trim() || isLoading}
+                    className="transition-all duration-200 hover:bg-[#38BDF8] hover:shadow-[0_0_20px_rgba(0,240,255,0.6)]"
                     style={{
                       height: 36,
                       padding: "0 20px",
                       borderRadius: 6,
-                      backgroundColor: "#E8A33D",
+                      backgroundColor: "#00F0FF",
+                      boxShadow: "0 0 15px rgba(0, 240, 255, 0.35)",
                       color: "#0B0D10",
                       fontWeight: 600,
                       fontSize: 13,
@@ -372,7 +406,8 @@ export function QuestionInputPage() {
                 style={{
                   display: "grid",
                   gridTemplateColumns: `repeat(${PIPELINE_STAGES.length}, 1fr)`,
-                  border: "1px solid #22262B",
+                  border: "1px solid #00F0FF",
+                  boxShadow: "0 0 10px rgba(0, 240, 255, 0.15)",
                   borderRadius: 6,
                   overflow: "hidden",
                   background: "#0B0D10",
@@ -390,7 +425,7 @@ export function QuestionInputPage() {
                         fontSize: 11,
                         borderRight:
                           idx < PIPELINE_STAGES.length - 1
-                            ? "1px solid #22262B"
+                            ? "1px solid rgba(0, 240, 255, 0.3)"
                             : "none",
                         backgroundColor: isCurrent
                           ? "#1B1F24"
@@ -398,7 +433,7 @@ export function QuestionInputPage() {
                         color: isCurrent
                           ? "#EDEEF0"
                           : isDone
-                          ? "#5FA8D3"
+                          ? "#00F0FF"
                           : "#8C93A1",
                         fontWeight: isCurrent ? 600 : 400,
                         display: "flex",
@@ -412,9 +447,9 @@ export function QuestionInputPage() {
                           fontFamily: "IBM Plex Mono, monospace",
                           fontSize: 10,
                           color: isCurrent
-                            ? "#E8A33D"
+                            ? "#00F0FF"
                             : isDone
-                            ? "#5FA8D3"
+                            ? "#00F0FF"
                             : "#8C93A1",
                         }}
                       >
@@ -431,7 +466,8 @@ export function QuestionInputPage() {
                 style={{
                   padding: "14px 16px",
                   borderRadius: 6,
-                  border: "1px solid #22262B",
+                  border: "1px solid #00F0FF",
+                  boxShadow: "0 0 10px rgba(0, 240, 255, 0.15)",
                   background: "#0B0D10",
                   display: "flex",
                   flexDirection: "column",
@@ -451,7 +487,7 @@ export function QuestionInputPage() {
                   <span>
                     step {activeStageIdx + 1} / {PIPELINE_STAGES.length}
                   </span>
-                  <span style={{ color: "#E8A33D" }}>{progressPercent}%</span>
+                  <span style={{ color: "#00F0FF" }}>{progressPercent}%</span>
                 </div>
 
                 {/* Terminal line */}
@@ -480,7 +516,8 @@ export function QuestionInputPage() {
                     style={{
                       height: "100%",
                       width: `${progressPercent}%`,
-                      backgroundColor: "#E8A33D",
+                      backgroundColor: "#00F0FF",
+                      boxShadow: "0 0 8px rgba(0, 240, 255, 0.6)",
                       transition: "width 0.4s ease",
                     }}
                   />

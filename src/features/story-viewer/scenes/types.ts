@@ -84,6 +84,107 @@ export type SceneAction =
         operandValue?: number;
         positions?: number[];
       };
+    }
+  | {
+      component: "Cell";
+      action: "initGrid";
+      params: Record<string, unknown> & {
+        rows: number;
+        cols: number;
+        rowLabels?: string[];
+        colLabels?: string[];
+      };
+    }
+  | {
+      component: "Cell";
+      action: "setValue";
+      params: Record<string, unknown> & {
+        row: number;
+        col: number;
+        value: number | string;
+      };
+    }
+  | {
+      component: "Cell";
+      action: "highlight";
+      params: Record<string, unknown> & {
+        row: number;
+        col: number;
+      };
+    }
+  | {
+      component: "Cell";
+      action: "showDependency";
+      params: Record<string, unknown> & {
+        row: number;
+        col: number;
+        dependsOn: Array<{ row: number; col: number }>;
+      };
+    }
+  | {
+      component: "Cell";
+      action: "markBase";
+      params: Record<string, unknown> & {
+        row: number;
+        col: number;
+      };
+    }
+  | {
+      component: "Cell";
+      action: "markFinal";
+      params: Record<string, unknown> & {
+        row: number;
+        col: number;
+      };
+    }
+  | {
+      component: "IntervalBar";
+      action: "initTimeline";
+      params: Record<string, unknown> & {
+        min?: number;
+        max?: number;
+        intervals: Array<{ id: string; start: number; end: number; label?: string }>;
+      };
+    }
+  | {
+      component: "IntervalBar";
+      action: "highlight";
+      params: Record<string, unknown> & {
+        id: string;
+      };
+    }
+  | {
+      component: "IntervalBar";
+      action: "compareOverlap";
+      params: Record<string, unknown> & {
+        idA: string;
+        idB: string;
+        overlaps: boolean;
+      };
+    }
+  | {
+      component: "IntervalBar";
+      action: "merge";
+      params: Record<string, unknown> & {
+        intoId: string;
+        fromIds: string[];
+        newStart: number;
+        newEnd: number;
+      };
+    }
+  | {
+      component: "IntervalBar";
+      action: "discard";
+      params: Record<string, unknown> & {
+        id: string;
+      };
+    }
+  | {
+      component: "IntervalBar";
+      action: "markResult";
+      params: Record<string, unknown> & {
+        id: string;
+      };
     };
 
 export interface SortingTrayInitialData {
@@ -132,4 +233,18 @@ export interface DeliveryDeskInitialData {
 export interface WorkshopInitialData {
   bitWidth: number;
   initialValue: number;
+}
+
+export interface LedgerGridInitialData {
+  rows: number;
+  cols: number;
+  rowLabels?: string[];
+  colLabels?: string[];
+  initialGrid?: (number | string | null)[][];
+}
+
+export interface TimelineTrackInitialData {
+  min?: number;
+  max?: number;
+  intervals: Array<{ id: string; start: number; end: number; label?: string }>;
 }
