@@ -155,6 +155,11 @@ export function QuestionInputPage() {
         <img
           src="/ntlap.png"
           alt="Logo"
+          width={150}
+          height={150}
+          fetchPriority="high"
+          loading="eager"
+          decoding="async"
           style={{
             height: "150px",
             width: "auto",
