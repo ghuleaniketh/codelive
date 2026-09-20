@@ -1,15 +1,30 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { connectAuthEmulator } from "firebase/auth";
+import { type FirebaseApp, initializeApp } from "firebase/app";
+import { type Auth, getAuth } from "firebase/auth";
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
+const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
+const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+const appId = import.meta.env.VITE_FIREBASE_APP_ID;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
 
-export { auth };
+if (apiKey && authDomain && projectId && appId) {
+  try {
+    app = initializeApp({
+      apiKey,
+      authDomain,
+      projectId,
+      appId,
+    });
+    auth = getAuth(app);
+  } catch (error) {
+    console.warn("Firebase initialization failed — auth disabled:", error);
+    auth = null;
+    app = null;
+  }
+} else {
+  console.warn("Firebase not configured — auth disabled");
+}
+
+export { auth, app };

@@ -1,10 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { signInWithPopup, signOut, GoogleAuthProvider, onIdTokenChanged } from "firebase/auth";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { signInWithPopup, signOut, GoogleAuthProvider, onIdTokenChanged, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { setCurrentIdToken, getCurrentIdToken } from "@/auth/tokenStore";
+import { setCurrentIdToken } from "@/auth/tokenStore";
 
 export type AuthContextType = {
-  user: import("firebase/auth").User | null;
+  user: User | null;
   idToken: string | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
@@ -20,47 +20,80 @@ export const useAuthContext = (): AuthContextType => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<import("firebase/auth").User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(Boolean(auth));
 
   useEffect(() => {
-    const unsub = onIdTokenChanged(auth, async (user) => {
-      if (user) {
-        const token = await user.getIdToken();
-        setUser(user);
-        setIdToken(token);
-        setCurrentIdToken(token);
-      } else {
-        setUser(null);
-        setIdToken(null);
-        setCurrentIdToken(null);
-      }
+    if (!auth) {
       setLoading(false);
-    });
+      return;
+    }
 
-    return () => unsub();
+    try {
+      const unsub = onIdTokenChanged(
+        auth,
+        async (user) => {
+          if (user) {
+            const token = await user.getIdToken();
+            setUser(user);
+            setIdToken(token);
+            setCurrentIdToken(token);
+          } else {
+            setUser(null);
+            setIdToken(null);
+            setCurrentIdToken(null);
+          }
+          setLoading(false);
+        },
+        (error) => {
+          console.warn("Auth state observer error:", error);
+          setLoading(false);
+        }
+      );
+
+      return () => unsub();
+    } catch (err) {
+      console.warn("Error setting up auth state listener:", err);
+      setLoading(false);
+    }
   }, []);
 
   const signInWithGoogle = async () => {
-    const result = await signInWithPopup(auth, new GoogleAuthProvider());
-    const token = await result.user.getIdToken();
-    setUser(result.user);
-    setIdToken(token);
-    setCurrentIdToken(token);
+    if (!auth) {
+      console.warn("Firebase not configured — sign-in unavailable");
+      return;
+    }
+    try {
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      const token = await result.user.getIdToken();
+      setUser(result.user);
+      setIdToken(token);
+      setCurrentIdToken(token);
+    } catch (err) {
+      console.error("Sign-in error:", err);
+    }
   };
 
   const signOutUser = async () => {
-    await signOut(auth);
+    if (!auth) {
+      setUser(null);
+      setIdToken(null);
+      setCurrentIdToken(null);
+      return;
+    }
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Sign-out error:", err);
+    }
     setUser(null);
     setIdToken(null);
     setCurrentIdToken(null);
   };
 
-  if (loading) return <div>Loading auth...</div>;
-
   return (
-    <AuthContext.Provider value={{ user, idToken, loading: false, signInWithGoogle, signOutUser }}>
+    <AuthContext.Provider value={{ user, idToken, loading, signInWithGoogle, signOutUser }}>
       {children}
     </AuthContext.Provider>
   );
