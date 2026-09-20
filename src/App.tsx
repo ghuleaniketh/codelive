@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import NotFound from "@/pages/NotFound";
 import { TestRunnerState } from "@/pages/TestRunnerStatePage";
 import { Route, Switch } from "wouter";
+import { AssetLoader } from "./components/AssetLoader";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import TestAuthPage from "./pages/TestAuthPage";
@@ -31,10 +32,11 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="dark"
-        switchable
-      >
+      <AssetLoader>
+        <ThemeProvider
+          defaultTheme="dark"
+          switchable
+        >
         <TooltipProvider>
           <Toaster />
           <div
@@ -61,7 +63,8 @@ function App() {
             </div>
           </div>
         </TooltipProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </AssetLoader>
     </ErrorBoundary>
   );
 }

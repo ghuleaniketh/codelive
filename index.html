@@ -14,8 +14,29 @@
     <title>Code Story Studio — Visual Algorithm Lab</title>
   </head>
 
-  <body>
-    <div id="root"></div>
+  <body style="background-color: #0B0D10; margin: 0;">
+    <div id="root">
+      <div
+        id="initial-loader"
+        style="position: fixed; inset: 0; background-color: #0B0D10; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'IBM Plex Mono', monospace; color: #8C93A1;"
+      >
+        <div style="position: relative; width: 38px; height: 38px;">
+          <div
+            style="width: 100%; height: 100%; border-radius: 50%; border: 2px solid rgba(237, 238, 240, 0.08); border-top-color: #00F0FF; animation: initial-spin 0.75s linear infinite;"
+          ></div>
+          <div
+            style="position: absolute; inset: 8px; border-radius: 50%; background-color: rgba(0, 240, 255, 0.08); animation: initial-pulse 1.5s ease-in-out infinite alternate;"
+          ></div>
+        </div>
+        <div style="margin-top: 16px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;">
+          Loading assets...
+        </div>
+        <style>
+          @keyframes initial-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+          @keyframes initial-pulse { 0% { transform: scale(0.85); opacity: 0.4; } 100% { transform: scale(1.15); opacity: 0.9; } }
+        </style>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 
