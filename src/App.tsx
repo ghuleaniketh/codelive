@@ -49,8 +49,8 @@ function App() {
               overflow: "hidden",
             }}
           >
-            {/* Shared full-bleed ambient video background layer with clearer 68% --bg scrim */}
-            <BackgroundVideo src="/background.mp4" overlayOpacity={0.68} />
+            {/* Shared full-bleed ambient video background layer with brighter, clearer 35% scrim */}
+            <BackgroundVideo src="/background.mp4" overlayOpacity={0.35} />
             <div
               style={{
                 position: "relative",

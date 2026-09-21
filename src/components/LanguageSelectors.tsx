@@ -38,8 +38,8 @@ export function ProgrammingLanguageSelector({
         <Button
           variant="ghost"
           size={size === "sm" ? "sm" : "default"}
-          className="group relative flex items-center justify-between gap-2.5 rounded-[6px] border border-[#00F0FF] bg-[#14171B] px-3 py-1.5 text-xs font-normal text-[#EDEEF0] transition-all duration-150 hover:bg-[rgba(0,240,255,0.12)] hover:border-[#00F0FF] hover:text-[#00F0FF] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
-          style={{ height: size === "sm" ? 32 : 36, minWidth: 150, boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)" }}
+          className="group relative flex items-center justify-between gap-2.5 rounded-[6px] border border-white/10 bg-[#14171B]/80 px-3 py-1.5 text-xs font-normal text-[#EDEEF0] backdrop-blur-md transition-all duration-150 hover:bg-[#1B1F24] hover:border-white/20 focus-visible:ring-1 focus-visible:ring-white/20"
+          style={{ height: size === "sm" ? 32 : 36, minWidth: 150, boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 8px rgba(0, 0, 0, 0.25)" }}
         >
           <span className="flex items-center gap-2">
             <span className="font-medium">
@@ -55,13 +55,13 @@ export function ProgrammingLanguageSelector({
 
       <DropdownMenuContent
         align="start"
-        className="w-64 rounded-[10px] border border-[#00F0FF] bg-[#1B1F24] p-1.5 shadow-[0_0_15px_rgba(0,240,255,0.2)]"
+        className="w-64 rounded-[10px] border border-white/10 bg-[#1B1F24]/95 backdrop-blur-xl p-1.5 shadow-2xl"
       >
         <DropdownMenuLabel className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-[#8C93A1]">
           <Code2 className="h-3.5 w-3.5 text-[#8C93A1]" />
           Programming language
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-[#22262B]" />
+        <DropdownMenuSeparator className="bg-white/5" />
 
         {PROGRAMMING_LANGUAGES.map((lang) => {
           const isSelected = lang.id === value;
@@ -71,8 +71,8 @@ export function ProgrammingLanguageSelector({
               onClick={() => onChange(lang.id)}
               className={`flex cursor-pointer items-center justify-between rounded-[6px] px-2.5 py-2 text-xs transition-colors duration-100 ${
                 isSelected
-                  ? "bg-[#14171B] text-[#00F0FF] font-medium border border-[#00F0FF]"
-                  : "text-[#EDEEF0] hover:bg-[rgba(0,240,255,0.12)] hover:text-[#00F0FF]"
+                  ? "bg-white/10 text-white font-medium border border-white/15"
+                  : "text-[#EDEEF0] hover:bg-white/5 hover:text-white"
               }`}
             >
               <div className="flex flex-col">
@@ -119,8 +119,8 @@ export function SarvamVoiceLanguageSelector({
         <Button
           variant="ghost"
           size={size === "sm" ? "sm" : "default"}
-          className="group relative flex items-center justify-between gap-2.5 rounded-[6px] border border-[#00F0FF] bg-[#14171B] px-3 py-1.5 text-xs font-normal text-[#EDEEF0] transition-all duration-150 hover:bg-[rgba(0,240,255,0.12)] hover:border-[#00F0FF] hover:text-[#00F0FF] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
-          style={{ height: size === "sm" ? 32 : 36, minWidth: 170, boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)" }}
+          className="group relative flex items-center justify-between gap-2.5 rounded-[6px] border border-white/10 bg-[#14171B]/80 px-3 py-1.5 text-xs font-normal text-[#EDEEF0] backdrop-blur-md transition-all duration-150 hover:bg-[#1B1F24] hover:border-white/20 focus-visible:ring-1 focus-visible:ring-white/20"
+          style={{ height: size === "sm" ? 32 : 36, minWidth: 170, boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 8px rgba(0, 0, 0, 0.25)" }}
         >
           <div className="flex items-center gap-1.5">
             <span className="font-medium">
@@ -136,7 +136,7 @@ export function SarvamVoiceLanguageSelector({
 
       <DropdownMenuContent
         align="start"
-        className="w-72 max-h-80 overflow-y-auto rounded-[10px] border border-[#00F0FF] bg-[#1B1F24] p-1.5 shadow-[0_0_15px_rgba(0,240,255,0.2)]"
+        className="w-72 max-h-80 overflow-y-auto rounded-[10px] border border-white/10 bg-[#1B1F24]/95 backdrop-blur-xl p-1.5 shadow-2xl"
       >
         <div className="px-2 py-1.5">
           <div className="flex items-center justify-between">
@@ -152,7 +152,7 @@ export function SarvamVoiceLanguageSelector({
             Neural text-to-speech powered by bulbul:v3
           </span>
         </div>
-        <DropdownMenuSeparator className="bg-[#22262B]" />
+        <DropdownMenuSeparator className="bg-white/5" />
 
         {SARVAM_INDIC_LANGUAGES.map((lang) => {
           const isSelected = lang.code === value;
@@ -162,8 +162,8 @@ export function SarvamVoiceLanguageSelector({
               onClick={() => onChange(lang.code)}
               className={`flex cursor-pointer items-center justify-between rounded-[6px] px-2.5 py-2 text-xs transition-colors duration-100 ${
                 isSelected
-                  ? "bg-[#14171B] text-[#00F0FF] font-medium border border-[#00F0FF]"
-                  : "text-[#EDEEF0] hover:bg-[rgba(0,240,255,0.12)] hover:text-[#00F0FF]"
+                  ? "bg-white/10 text-white font-medium border border-white/15"
+                  : "text-[#EDEEF0] hover:bg-white/5 hover:text-white"
               }`}
             >
               <div className="flex flex-col">

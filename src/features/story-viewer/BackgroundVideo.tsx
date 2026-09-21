@@ -7,7 +7,7 @@ export interface BackgroundVideoProps {
 
 export function BackgroundVideo({
   src = "/background.mp4",
-  overlayOpacity = 0.68,
+  overlayOpacity = 0.35,
 }: BackgroundVideoProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);

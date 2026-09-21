@@ -18,6 +18,19 @@ describe("StoryViewerPage Ergonomic Workbench Split Layout", () => {
       array: [{ id: "0", value: 5 }, { id: "1", value: 3 }],
       code: "def sort(arr):\n    arr[0], arr[1] = arr[1], arr[0]",
     },
+    problemMeta: {
+      title: "Sort An Array",
+      difficultyGuess: "Medium",
+      sourceLink: "https://leetcode.com/problems/sort-an-array",
+    },
+    approachInfo: {
+      label: "Opposite-ends two pointers",
+      technique: "Two Pointers",
+      complexity: {
+        time: "O(n)",
+        space: "O(1)",
+      },
+    },
     steps: [
       {
         index: 0,
@@ -30,10 +43,19 @@ describe("StoryViewerPage Ergonomic Workbench Split Layout", () => {
           { component: "Box", action: "compare", params: { box1Id: "0", box2Id: "1" } },
         ],
       },
+      {
+        index: 1,
+        stepType: "step",
+        codeLines: [2],
+        text: "Swap 5 and 3",
+        narrationText: "Now sorted.",
+        state: { "arr[0]": 3, "arr[1]": 5 },
+        sceneActions: [],
+      },
     ],
   };
 
-  it("renders ProblemPanel, docked CodePanel + StatePanel, StorySlide, Scene, and anchored PlaybackControls", () => {
+  it("renders redesigned header with title, approachInfo subtitle, complexity badges, and workbench layout", () => {
     const queryClient = new QueryClient();
     const trpcClient = trpc.createClient({
       links: [
@@ -55,9 +77,15 @@ describe("StoryViewerPage Ergonomic Workbench Split Layout", () => {
       </trpc.Provider>
     );
 
-    // Header & Problem
-    expect(markup).toContain("Story viewer");
-    expect(markup).toContain("Sort an array");
+    // Header Title & Subtitle & Badges
+    expect(markup).toContain("Sort An Array");
+    expect(markup).toContain("Opposite-ends two pointers");
+    expect(markup).toContain("Medium");
+    expect(markup).toContain("time");
+    expect(markup).toContain("O(n)");
+    expect(markup).toContain("space");
+    expect(markup).toContain("O(1)");
+    expect(markup).toContain("step");
 
     // Left column: CodePanel and StatePanel
     expect(markup).toContain("def");

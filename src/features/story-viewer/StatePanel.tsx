@@ -29,8 +29,8 @@ export function StatePanel({
       style={{
         width: "100%",
         background: "#14171B",
-        border: "1px solid #00F0FF",
-        boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
         borderRadius: 10,
         padding: "12px",
         boxSizing: "border-box",

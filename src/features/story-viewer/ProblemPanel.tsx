@@ -62,8 +62,8 @@ export function ProblemPanel({
         padding: "12px 16px",
         background: "#14171B",
         borderRadius: 10,
-        border: "1px solid #00F0FF",
-        boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
       }}
     >
       <div

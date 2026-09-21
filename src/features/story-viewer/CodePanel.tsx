@@ -225,9 +225,9 @@ export const CodePanel = ({
         display: "flex",
         flexDirection: "column",
         borderRadius: 10,
-        border: "1px solid #00F0FF",
-        boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
-        background: "#14171B",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 12px 32px rgba(0, 0, 0, 0.45)",
+        background: "#0B0D10",
         overflow: "hidden",
       }}
       aria-label={`Code snippet in ${languageId}`}

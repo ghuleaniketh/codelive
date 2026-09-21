@@ -12,6 +12,13 @@ const mergeIntervalsStory: Story = {
     title: "Merge Intervals",
     difficultyGuess: "Medium",
   },
+  approachInfo: {
+    label: "Sort and Merge Intervals",
+    complexity: {
+      time: "O(n log n)",
+      space: "O(n)",
+    },
+  },
   initialData: {
     min: 0,
     max: 20,

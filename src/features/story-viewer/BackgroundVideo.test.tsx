@@ -5,7 +5,7 @@ import { BackgroundVideo } from "./BackgroundVideo";
 describe("BackgroundVideo ambient layer", () => {
   it("renders the video element with ambient properties and scrim overlay", () => {
     const markup = renderToStaticMarkup(
-      <BackgroundVideo src="/background.mp4" overlayOpacity={0.68} />
+      <BackgroundVideo src="/background.mp4" overlayOpacity={0.35} />
     );
 
     expect(markup).toContain('data-testid="ambient-background-video"');
@@ -14,6 +14,6 @@ describe("BackgroundVideo ambient layer", () => {
     expect(markup).toContain("muted");
     expect(markup.toLowerCase()).toContain("playsinline");
     expect(markup).toContain("pointer-events:none");
-    expect(markup).toContain("opacity:0.68");
+    expect(markup).toContain("opacity:0.35");
   });
 });

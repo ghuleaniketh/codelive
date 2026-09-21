@@ -1,16 +1,23 @@
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
+import {
+  Play,
+  Pause,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+} from "lucide-react";
 
 export interface PlaybackControlsProps {
   currentStepIndex: number;
   totalSteps: number;
   isPlaying?: boolean;
   onTogglePlay?: () => void;
-  onPrev: () => void;
   onNext: () => void;
+  onPrev: () => void;
   onRestart: () => void;
-  steps: any[];
-  onStepChange: (index: number) => void;
+  onSeek?: (index: number) => void;
+  onStepChange?: (index: number) => void;
+  steps?: unknown[];
   speed?: number;
   setSpeed?: (speed: number) => void;
 }
@@ -20,18 +27,16 @@ export function PlaybackControls({
   totalSteps,
   isPlaying = false,
   onTogglePlay,
-  onPrev,
   onNext,
+  onPrev,
   onRestart,
-  steps,
+  onSeek,
   onStepChange,
+  steps: _steps,
   speed = 1,
   setSpeed,
 }: PlaybackControlsProps) {
-  const handleStepChange = (index: number) => {
-    onStepChange(index);
-  };
-
+  const handleSeek = onSeek || onStepChange;
   return (
     <div
       style={{
@@ -43,8 +48,8 @@ export function PlaybackControls({
         gap: 12,
         padding: "8px 12px",
         background: "#14171B",
-        border: "1px solid #00F0FF",
-        boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
         borderRadius: 10,
         boxSizing: "border-box",
       }}
@@ -56,11 +61,11 @@ export function PlaybackControls({
           size="sm"
           onClick={onPrev}
           disabled={currentStepIndex === 0}
-          className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.15)] hover:text-[#00F0FF] hover:border-[#00F0FF] hover:shadow-[0_0_10px_rgba(0,240,255,0.3)] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
+          className="transition-all duration-150 hover:bg-white/10 hover:text-white hover:border-white/20"
           style={{
             color: "#EDEEF0",
             borderRadius: 6,
-            border: "1px solid #00F0FF",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
             fontSize: 12,
             height: 28,
             padding: "0 10px",
@@ -76,11 +81,11 @@ export function PlaybackControls({
             onClick={onTogglePlay}
             aria-label={isPlaying ? "Pause autoplay (Space)" : "Start autoplay (Space)"}
             title={isPlaying ? "Pause autoplay (Space)" : "Start autoplay (Space)"}
-            className="transition-all duration-150 hover:bg-[#38BDF8] hover:shadow-[0_0_15px_rgba(0,240,255,0.5)] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
+            className="transition-all duration-150 hover:bg-[#38BDF8] hover:shadow-[0_0_15px_rgba(0,240,255,0.5)]"
             style={{
-              color: isPlaying ? "#0B0D10" : "#00F0FF",
-              backgroundColor: isPlaying ? "#00F0FF" : "#1B1F24",
-              border: "1px solid #00F0FF",
+              color: isPlaying ? "#0B0D10" : "#EDEEF0",
+              backgroundColor: isPlaying ? "#00F0FF" : "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
               boxShadow: isPlaying ? "0 0 12px rgba(0, 240, 255, 0.4)" : "none",
               borderRadius: 6,
               fontSize: 12,
@@ -96,7 +101,7 @@ export function PlaybackControls({
               </>
             ) : (
               <>
-                <Play className="mr-1.5 h-3 w-3 fill-current" /> Play
+                <Play className="mr-1.5 h-3 w-3 fill-current text-[#00F0FF]" /> Play
               </>
             )}
           </Button>
@@ -107,11 +112,11 @@ export function PlaybackControls({
           size="sm"
           onClick={onNext}
           disabled={currentStepIndex === totalSteps - 1}
-          className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.15)] hover:text-[#00F0FF] hover:border-[#00F0FF] hover:shadow-[0_0_10px_rgba(0,240,255,0.3)] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
+          className="transition-all duration-150 hover:bg-white/10 hover:text-white hover:border-white/20"
           style={{
             color: "#EDEEF0",
             borderRadius: 6,
-            border: "1px solid #00F0FF",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
             fontSize: 12,
             height: 28,
             padding: "0 10px",
@@ -138,11 +143,11 @@ export function PlaybackControls({
           size="sm"
           onClick={onRestart}
           disabled={currentStepIndex === 0}
-          className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.15)] hover:text-[#00F0FF] hover:border-[#00F0FF] hover:shadow-[0_0_10px_rgba(0,240,255,0.3)] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
+          className="transition-all duration-150 hover:bg-white/10 hover:text-white hover:border-white/20"
           style={{
             color: "#8C93A1",
             borderRadius: 6,
-            border: "1px solid #00F0FF",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
             fontSize: 12,
             height: 28,
             padding: "0 8px",
@@ -173,17 +178,17 @@ export function PlaybackControls({
                 key={s}
                 variant="ghost"
                 size="sm"
-                className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.2)] hover:text-[#00F0FF] focus-visible:ring-1 focus-visible:ring-[#00F0FF]"
+                className="transition-all duration-150 hover:bg-white/10 hover:text-white"
                 style={{
                   fontFamily: "IBM Plex Mono, monospace",
                   fontSize: 11,
                   padding: "0 6px",
                   height: 24,
                   borderRadius: 6,
-                  border: `1px solid ${isSelected ? "#00F0FF" : "rgba(0, 240, 255, 0.4)"}`,
-                  background: isSelected ? "#00F0FF" : "transparent",
-                  color: isSelected ? "#0B0D10" : "#8C93A1",
-                  boxShadow: isSelected ? "0 0 8px rgba(0, 240, 255, 0.4)" : "none",
+                  border: `1px solid ${isSelected ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.08)"}`,
+                  background: isSelected ? "rgba(255, 255, 255, 0.15)" : "transparent",
+                  color: isSelected ? "#EDEEF0" : "#8C93A1",
+                  boxShadow: isSelected ? "inset 0 1px 0 rgba(255, 255, 255, 0.1)" : "none",
                   fontWeight: isSelected ? 600 : 400,
                 }}
                 onClick={() => setSpeed && setSpeed(Number(s))}
@@ -199,17 +204,16 @@ export function PlaybackControls({
           min="0"
           max={Math.max(totalSteps - 1, 0)}
           value={currentStepIndex}
-          onChange={(e) => handleStepChange(Number(e.target.value))}
-          className="focus-visible:outline-none"
+          onChange={(e) => handleSeek && handleSeek(Number(e.target.value))}
           style={{
-            flex: "1 1 120px",
+            flex: "1 1 100px",
             minWidth: 80,
             maxWidth: 160,
+            cursor: "pointer",
             height: 4,
             accentColor: "#00F0FF",
-            borderRadius: 6,
-            cursor: "pointer",
           }}
+          aria-label="Story scrubber"
         />
       </div>
     </div>

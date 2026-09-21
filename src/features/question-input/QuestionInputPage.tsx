@@ -155,16 +155,18 @@ export function QuestionInputPage() {
         <img
           src="/ntlap.png"
           alt="Logo"
-          width={150}
-          height={150}
+          width={90}
+          height={90}
           fetchPriority="high"
           loading="eager"
           decoding="async"
           style={{
-            height: "150px",
+            height: "90px",
             width: "auto",
             objectFit: "contain",
             display: "block",
+            opacity: 0.85,
+            transition: "opacity 0.2s ease",
           }}
         />
       </div>
@@ -181,10 +183,12 @@ export function QuestionInputPage() {
       >
         <div
           style={{
-            background: "#14171B",
-            border: "1px solid #00F0FF",
-            boxShadow: "0 0 20px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.05)",
-            borderRadius: 10,
+            background: "rgba(14, 17, 22, 0.38)",
+            backdropFilter: "blur(32px) saturate(190%)",
+            WebkitBackdropFilter: "blur(32px) saturate(190%)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
+            borderRadius: 12,
             padding: "32px",
             boxSizing: "border-box",
             display: "flex",
@@ -194,29 +198,17 @@ export function QuestionInputPage() {
         >
           {/* Header */}
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  backgroundColor: "#00F0FF",
-                  boxShadow: "0 0 8px rgba(0, 240, 255, 0.6)",
-                  display: "inline-block",
-                }}
-              />
-              <h1
-                style={{
-                  fontSize: 18,
-                  fontWeight: 600,
-                  color: "#EDEEF0",
-                  margin: 0,
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                Code Story Studio
-              </h1>
-            </div>
+            <h1
+              style={{
+                fontSize: 18,
+                fontWeight: 600,
+                color: "#EDEEF0",
+                margin: 0,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Code Story Studio
+            </h1>
             <p
               style={{
                 fontSize: 13,
@@ -258,15 +250,18 @@ export function QuestionInputPage() {
                   }}
                   placeholder="Describe an algorithm or paste a DSA problem (e.g. 'Binary search in sorted array' or 'Invert a binary tree')…"
                   rows={5}
+                  className="transition-all duration-200 focus:border-white/30"
                   style={{
-                    background: "#0B0D10",
-                    border: "1px solid #00F0FF",
-                    boxShadow: "0 0 10px rgba(0, 240, 255, 0.15)",
+                    background: "linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 40%, rgba(10, 12, 16, 0.22) 100%)",
+                    backdropFilter: "blur(20px) saturate(190%)",
+                    WebkitBackdropFilter: "blur(20px) saturate(190%)",
+                    border: "1px solid rgba(255, 255, 255, 0.10)",
+                    boxShadow: "inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2), 0 8px 32px 0 rgba(0, 0, 0, 0.2)",
                     color: "#EDEEF0",
                     fontSize: 13,
                     lineHeight: 1.6,
-                    borderRadius: 6,
-                    padding: "12px 14px",
+                    borderRadius: 8,
+                    padding: "14px 16px",
                     minHeight: 120,
                     maxHeight: 240,
                     resize: "none",
@@ -327,9 +322,9 @@ export function QuestionInputPage() {
                   style={{
                     padding: "10px 12px",
                     borderRadius: 6,
-                    border: "1px solid #00F0FF",
-                    background: "#1B1F24",
-                    color: "#00F0FF",
+                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                    background: "rgba(27, 31, 36, 0.85)",
+                    color: "#F87171",
                     fontSize: 12,
                     fontFamily: "IBM Plex Mono, monospace",
                   }}
@@ -345,7 +340,7 @@ export function QuestionInputPage() {
                   alignItems: "center",
                   justifyContent: "space-between",
                   paddingTop: 8,
-                  borderTop: "1px solid rgba(0, 240, 255, 0.3)",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.08)",
                 }}
               >
                 {/* AI Sandbox Ready Status */}
@@ -411,11 +406,13 @@ export function QuestionInputPage() {
                 style={{
                   display: "grid",
                   gridTemplateColumns: `repeat(${PIPELINE_STAGES.length}, 1fr)`,
-                  border: "1px solid #00F0FF",
-                  boxShadow: "0 0 10px rgba(0, 240, 255, 0.15)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
                   borderRadius: 6,
                   overflow: "hidden",
-                  background: "#0B0D10",
+                  background: "rgba(11, 13, 16, 0.7)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05)",
                 }}
               >
                 {PIPELINE_STAGES.map((stage, idx) => {
@@ -430,10 +427,10 @@ export function QuestionInputPage() {
                         fontSize: 11,
                         borderRight:
                           idx < PIPELINE_STAGES.length - 1
-                            ? "1px solid rgba(0, 240, 255, 0.3)"
+                            ? "1px solid rgba(255, 255, 255, 0.08)"
                             : "none",
                         backgroundColor: isCurrent
-                          ? "#1B1F24"
+                          ? "rgba(255, 255, 255, 0.06)"
                           : "transparent",
                         color: isCurrent
                           ? "#EDEEF0"
@@ -471,9 +468,11 @@ export function QuestionInputPage() {
                 style={{
                   padding: "14px 16px",
                   borderRadius: 6,
-                  border: "1px solid #00F0FF",
-                  boxShadow: "0 0 10px rgba(0, 240, 255, 0.15)",
-                  background: "#0B0D10",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: "rgba(11, 13, 16, 0.7)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05)",
                   display: "flex",
                   flexDirection: "column",
                   gap: 10,

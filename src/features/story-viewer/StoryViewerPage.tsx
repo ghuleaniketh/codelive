@@ -47,11 +47,22 @@ export function StoryViewerPage({
 }) {
   const steps = story?.steps ?? [];
   const total = steps.length;
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const effectiveProblemMeta = problemMeta ?? story?.problemMeta;
   const problemTitle =
     effectiveProblemMeta?.title ||
     (questionText ? questionText.slice(0, 60) : "") ||
     (story?.kind ? story.kind.replace(/-/g, " ").toUpperCase() : "ALGORITHM VISUALIZER");
+
+  const approachLabel =
+    story?.approachInfo?.label ||
+    (story?.kind ? story.kind.replace(/-/g, " ") : undefined);
+  const timeComplexity =
+    story?.approachInfo?.complexity?.time ||
+    "O(n)";
+  const spaceComplexity =
+    story?.approachInfo?.complexity?.space ||
+    "O(1)";
 
   const {
     currentStepIndex,
@@ -126,6 +137,14 @@ export function StoryViewerPage({
   const storyLanguage = story?.language;
   const currentCodeLines = step?.codeLines;
 
+  // Compute interactive background with subtle hover spotlight effect
+  const canvasBgImage = useMemo(() => {
+    const hoverSpotlight = mousePos
+      ? `radial-gradient(260px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 240, 255, 0.045) 0%, transparent 75%), `
+      : "";
+    return `${hoverSpotlight}radial-gradient(ellipse 70% 45% at 50% 0%, rgba(0, 240, 255, 0.08) 0%, transparent 75%), radial-gradient(ellipse 60% 40% at 50% 100%, rgba(95, 168, 211, 0.04) 0%, transparent 80%), radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px)`;
+  }, [mousePos]);
+
   // Global keyboard shortcuts: Space (toggle-play), Left/A (prev), Right/D (next), R (restart)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -168,134 +187,35 @@ export function StoryViewerPage({
         overflow: "hidden",
       }}
     >
-      {/* Top Header Bar */}
+      {/* Top Slim Navigation Bar */}
       <header
         style={{
           position: "relative",
-          zIndex: 1,
+          zIndex: 20,
           width: "100%",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "flex-start",
           gap: 12,
           flexShrink: 0,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="transition-all duration-150 hover:bg-[rgba(0,240,255,0.15)] hover:text-[#00F0FF] hover:border-[#00F0FF] hover:shadow-[0_0_10px_rgba(0,240,255,0.3)]"
-            style={{
-              color: "#EDEEF0",
-              fontSize: 12,
-              borderRadius: 6,
-              border: "1px solid #00F0FF",
-              boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)",
-              background: "#14171B",
-              height: 32,
-            }}
-          >
-            <ArrowLeft className="mr-1.5 h-3.5 w-3.5 text-[#00F0FF]" /> New problem
-          </Button>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "4px 10px",
-              borderRadius: 6,
-              background: "#14171B",
-              border: "1px solid #00F0FF",
-              boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)",
-            }}
-          >
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 500,
-                color: "#EDEEF0",
-              }}
-            >
-              Story viewer
-            </span>
-            <span style={{ color: "#8C93A1", fontSize: 11 }}>/</span>
-            <span
-              style={{
-                fontSize: 11,
-                fontFamily: "IBM Plex Mono, monospace",
-                color: "#8C93A1",
-              }}
-            >
-              {story?.kind || "algorithm-visualizer"}
-            </span>
-          </div>
-        </div>
-
-        {/* Top Header Right: Playback status */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Playback status */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "4px 10px",
-              borderRadius: 6,
-              backgroundColor: "#14171B",
-              border: "1px solid #00F0FF",
-              boxShadow: "0 0 8px rgba(0, 240, 255, 0.15)",
-              color: isPlaying ? "#00F0FF" : "#8C93A1",
-              fontSize: 11,
-              fontFamily: "IBM Plex Mono, monospace",
-              fontWeight: 500,
-            }}
-          >
-            {isPlaying ? (
-              <>
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    backgroundColor: "#00F0FF",
-                    boxShadow: "0 0 6px rgba(0, 240, 255, 0.6)",
-                    display: "inline-block",
-                  }}
-                />
-                running ({playbackSpeed}×)
-              </>
-            ) : playbackStatus === "completed" ? (
-              <>
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    backgroundColor: "#5FBF77",
-                    display: "inline-block",
-                  }}
-                />
-                completed
-              </>
-            ) : (
-              <>
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    backgroundColor: "#8C93A1",
-                    display: "inline-block",
-                  }}
-                />
-                paused
-              </>
-            )}
-          </div>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="transition-all duration-150 hover:bg-white/10 hover:text-white"
+          style={{
+            color: "#EDEEF0",
+            fontSize: 12,
+            borderRadius: 6,
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            background: "#14171B",
+            height: 30,
+          }}
+        >
+          <ArrowLeft className="mr-1.5 h-3.5 w-3.5 text-[#00F0FF]" /> New problem
+        </Button>
       </header>
 
       {/* Main Workspace Split Layout: Fullscreen Proportions (Left ~30%, Right ~70%) */}
@@ -351,91 +271,358 @@ export function StoryViewerPage({
         >
           {/* Visual Scene Stage Canvas */}
           <div
+            onMouseMove={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+            }}
+            onMouseLeave={() => setMousePos(null)}
             style={{
               flex: "0 0 68%",
               minHeight: 320,
-              backgroundColor: "#14171B",
-              border: "1px solid #00F0FF",
-              boxShadow: "0 0 20px rgba(0, 240, 255, 0.2)",
+              backgroundColor: "#0D1015",
+              backgroundImage: canvasBgImage,
+              backgroundSize: mousePos
+                ? "100% 100%, 100% 100%, 100% 100%, 32px 32px, 32px 32px, 32px 32px"
+                : "100% 100%, 100% 100%, 32px 32px, 32px 32px, 32px 32px",
+              border: mousePos
+                ? "1px solid rgba(255, 255, 255, 0.13)"
+                : "1px solid rgba(255, 255, 255, 0.08)",
+              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.5), inset 0 0 100px rgba(0, 0, 0, 0.55)",
               borderRadius: 10,
               position: "relative",
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
+              transition: "border-color 0.25s ease",
             }}
           >
-            {/* Top-Right Badge: Problem Title */}
+            {/* Top-Left Canvas Overlay: Slide Status & Progress Dots */}
             <div
               style={{
                 position: "absolute",
-                top: 10,
-                right: 12,
+                top: 12,
+                left: 14,
                 zIndex: 10,
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                maxWidth: "70%",
+                pointerEvents: "auto",
               }}
             >
-              {effectiveProblemMeta?.difficultyGuess && (
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontFamily: "IBM Plex Mono, monospace",
-                    fontWeight: 500,
-                    padding: "2px 8px",
-                    borderRadius: 6,
-                    backgroundColor: "#1B1F24",
-                    color:
-                      effectiveProblemMeta.difficultyGuess === "Easy"
-                        ? "#5FBF77"
-                        : "#E8A33D",
-                    border: "1px solid rgba(0, 240, 255, 0.4)",
-                  }}
-                >
-                  {effectiveProblemMeta.difficultyGuess}
-                </span>
-              )}
-
+              {/* Playback status pill */}
               <div
                 style={{
-                  padding: "3px 10px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "3px 8px",
                   borderRadius: 6,
-                  background: "#1B1F24",
-                  border: "1px solid rgba(0, 240, 255, 0.4)",
-                  color: "#EDEEF0",
-                  fontSize: 12,
+                  backgroundColor: "rgba(20, 23, 27, 0.85)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  color: isPlaying ? "#00F0FF" : "#8C93A1",
+                  fontSize: 11,
+                  fontFamily: "IBM Plex Mono, monospace",
                   fontWeight: 500,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
                 }}
-                title={problemTitle}
               >
-                {problemTitle}
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    backgroundColor: isPlaying
+                      ? "#00F0FF"
+                      : playbackStatus === "completed"
+                      ? "#5FBF77"
+                      : "#8C93A1",
+                    boxShadow: isPlaying ? "0 0 6px rgba(0, 240, 255, 0.6)" : "none",
+                    display: "inline-block",
+                  }}
+                />
+                {isPlaying ? `${playbackSpeed}×` : playbackStatus === "completed" ? "completed" : "paused"}
               </div>
 
-              {effectiveProblemMeta?.sourceLink && (
-                <a
-                  href={effectiveProblemMeta.sourceLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {/* Minimal Progress Dots */}
+              {total > 1 && (
+                <div
                   style={{
-                    display: "inline-flex",
+                    display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    width: 24,
-                    height: 24,
-                    borderRadius: 6,
-                    background: "#1B1F24",
-                    border: "1px solid rgba(0, 240, 255, 0.4)",
-                    color: "#5FA8D3",
-                    textDecoration: "none",
+                    gap: 4,
+                    padding: "2px 0",
                   }}
-                  title="Open original problem source"
                 >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
+                  {steps.map((_, idx) => {
+                    const isCurrent = idx === currentStepIndex;
+                    const isPast = idx < currentStepIndex;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => goToStep(idx)}
+                        title={`Jump to step ${idx + 1}`}
+                        style={{
+                          height: isCurrent ? 5 : 4,
+                          width: isCurrent ? 16 : 6,
+                          borderRadius: 3,
+                          backgroundColor: isCurrent
+                            ? "#00F0FF"
+                            : isPast
+                            ? "rgba(0, 240, 255, 0.45)"
+                            : "rgba(255, 255, 255, 0.2)",
+                          boxShadow: isCurrent ? "0 0 8px rgba(0, 240, 255, 0.6)" : "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Top-Right Canvas Overlay: Problem Title & Approach Subtitle with Clear Hierarchy */}
+            <div
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 14,
+                zIndex: 10,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: 4,
+                maxWidth: "60%",
+                pointerEvents: "auto",
+              }}
+            >
+              {/* Primary Header Row: Problem Title + Badges */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  justifyContent: "flex-end",
+                }}
+              >
+                {/* Step counter badge */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "2px 7px",
+                    borderRadius: 6,
+                    backgroundColor: "rgba(20, 23, 27, 0.85)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    fontSize: 11,
+                    fontFamily: "IBM Plex Mono, monospace",
+                    color: "#EDEEF0",
+                  }}
+                >
+                  <span style={{ color: "#8C93A1" }}>step</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {currentStepIndex + 1}/{total}
+                  </span>
+                </div>
+
+                {/* Difficulty badge */}
+                {effectiveProblemMeta?.difficultyGuess && (
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontFamily: "IBM Plex Mono, monospace",
+                      fontWeight: 600,
+                      padding: "2px 7px",
+                      borderRadius: 6,
+                      backgroundColor: "rgba(20, 23, 27, 0.85)",
+                      color:
+                        effectiveProblemMeta.difficultyGuess === "Easy"
+                          ? "#5FBF77"
+                          : effectiveProblemMeta.difficultyGuess === "Hard"
+                          ? "#EF4444"
+                          : "#E8A33D",
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                    }}
+                  >
+                    {effectiveProblemMeta.difficultyGuess}
+                  </span>
+                )}
+
+                {/* Prominent Problem Title */}
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "#EDEEF0",
+                    letterSpacing: "-0.015em",
+                    lineHeight: 1.2,
+                    maxWidth: 320,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={problemTitle}
+                >
+                  {problemTitle}
+                </h2>
+
+                {effectiveProblemMeta?.sourceLink && (
+                  <a
+                    href={effectiveProblemMeta.sourceLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      background: "rgba(20, 23, 27, 0.85)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "#5FA8D3",
+                      textDecoration: "none",
+                    }}
+                    title="Open original problem source"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+
+              {/* Subtitle Row: Approach label + Time & Space Complexity */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  justifyContent: "flex-end",
+                }}
+              >
+                {approachLabel && (
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: "#00F0FF",
+                      fontFamily: "IBM Plex Mono, monospace",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {approachLabel}
+                  </span>
+                )}
+
+                {/* Time Complexity Chip */}
+                {timeComplexity && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "1px 6px",
+                      borderRadius: 5,
+                      backgroundColor: "rgba(20, 23, 27, 0.85)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      fontSize: 11,
+                      fontFamily: "IBM Plex Mono, monospace",
+                      color: "#EDEEF0",
+                    }}
+                  >
+                    <span style={{ color: "#8C93A1" }}>time</span>
+                    <span style={{ color: "#5FA8D3", fontWeight: 600 }}>
+                      {timeComplexity}
+                    </span>
+                  </div>
+                )}
+
+                {/* Space Complexity Chip */}
+                {spaceComplexity && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "1px 6px",
+                      borderRadius: 5,
+                      backgroundColor: "rgba(20, 23, 27, 0.85)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      fontSize: 11,
+                      fontFamily: "IBM Plex Mono, monospace",
+                      color: "#EDEEF0",
+                    }}
+                  >
+                    <span style={{ color: "#8C93A1" }}>space</span>
+                    <span style={{ color: "#5FBF77", fontWeight: 600 }}>
+                      {spaceComplexity}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom-Left Canvas Overlay: Time Complexity and Space Complexity */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: 12,
+                left: 14,
+                zIndex: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                pointerEvents: "auto",
+              }}
+            >
+              {/* Time Complexity Badge */}
+              {timeComplexity && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "3px 8px",
+                    borderRadius: 6,
+                    backgroundColor: "rgba(20, 23, 27, 0.85)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    fontSize: 11,
+                    fontFamily: "IBM Plex Mono, monospace",
+                    color: "#EDEEF0",
+                  }}
+                >
+                  <span style={{ color: "#8C93A1" }}>time</span>
+                  <span style={{ color: "#5FA8D3", fontWeight: 600 }}>
+                    {timeComplexity}
+                  </span>
+                </div>
+              )}
+
+              {/* Space Complexity Badge */}
+              {spaceComplexity && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "3px 8px",
+                    borderRadius: 6,
+                    backgroundColor: "rgba(20, 23, 27, 0.85)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    fontSize: 11,
+                    fontFamily: "IBM Plex Mono, monospace",
+                    color: "#EDEEF0",
+                  }}
+                >
+                  <span style={{ color: "#8C93A1" }}>space</span>
+                  <span style={{ color: "#5FBF77", fontWeight: 600 }}>
+                    {spaceComplexity}
+                  </span>
+                </div>
               )}
             </div>
 
@@ -500,8 +687,8 @@ export function StoryViewerPage({
                   flex: 1,
                   minHeight: 0,
                   borderRadius: 10,
-                  border: "1px solid #00F0FF",
-                  boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
                   background: "#14171B",
                   padding: "12px 16px",
                   display: "flex",
@@ -533,7 +720,7 @@ export function StoryViewerPage({
                           borderRadius: 6,
                           backgroundColor: "#1B1F24",
                           color: "#5FA8D3",
-                          border: "1px solid rgba(0, 240, 255, 0.4)",
+                          border: "1px solid rgba(255, 255, 255, 0.12)",
                         }}
                       >
                         goal
@@ -550,7 +737,7 @@ export function StoryViewerPage({
                           borderRadius: 6,
                           backgroundColor: "#1B1F24",
                           color: "#5FBF77",
-                          border: "1px solid rgba(0, 240, 255, 0.4)",
+                          border: "1px solid rgba(255, 255, 255, 0.12)",
                         }}
                       >
                         summary
@@ -573,7 +760,7 @@ export function StoryViewerPage({
                         padding: "3px 8px",
                         borderRadius: 6,
                         background: isAutoplayBlocked ? "rgba(0, 240, 255, 0.15)" : "#1B1F24",
-                        border: `1px solid ${isAutoplayBlocked ? "#00F0FF" : "rgba(0, 240, 255, 0.4)"}`,
+                        border: `1px solid ${isAutoplayBlocked ? "#00F0FF" : "rgba(255, 255, 255, 0.12)"}`,
                         boxShadow: isAutoplayBlocked ? "0 0 10px rgba(0, 240, 255, 0.3)" : "none",
                         fontSize: 11,
                         color: isAutoplayBlocked

@@ -32,6 +32,17 @@ export type StoryKind =
   | "ledger-grid"
   | "timeline-track";
 
+export type ApproachComplexity = {
+  time?: string;
+  space?: string;
+};
+
+export type ApproachInfo = {
+  label?: string;
+  technique?: string;
+  complexity?: ApproachComplexity;
+};
+
 export type Story = {
   id: string;
   submissionId: string;
@@ -41,5 +52,6 @@ export type Story = {
   initialData: any;
   steps: StoryStep[];
   problemMeta?: ProblemMeta;
+  approachInfo?: ApproachInfo;
   createdAt: Date | string;
 };
